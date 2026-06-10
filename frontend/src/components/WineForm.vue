@@ -104,8 +104,8 @@
       </div>
 
       <div class="col-12">
-        <label class="form-label fw-semibold">Image URL</label>
-        <input v-model="form.imageUrl" type="url" class="form-control" placeholder="https://..." />
+        <label class="form-label fw-semibold">Image</label>
+        <ImageUpload v-model="form.imageUrl" />
       </div>
 
       <div class="col-12">
@@ -161,6 +161,7 @@
 <script setup>
 import { reactive, ref } from 'vue'
 import AlertMessage from './AlertMessage.vue'
+import ImageUpload from './ImageUpload.vue'
 import { wineService } from '@/services/wineService'
 import { WINE_COLORS } from '@/utils/drinkStatus'
 

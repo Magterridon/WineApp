@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="WineApp.Api/WineApp.Api.csproj" />
+  <Project Path="WineApp.Tests/WineApp.Tests.csproj" />
+</Solution>

@@ -32,8 +32,8 @@
       </div>
 
       <div class="col-12">
-        <label class="form-label fw-semibold">Image URL</label>
-        <input v-model="form.imageUrl" type="url" class="form-control" placeholder="https://..." />
+        <label class="form-label fw-semibold">Image</label>
+        <ImageUpload v-model="form.imageUrl" />
       </div>
 
       <div class="col-md-6">
@@ -120,6 +120,7 @@
 <script setup>
 import { reactive, ref, computed } from 'vue'
 import AlertMessage from './AlertMessage.vue'
+import ImageUpload from './ImageUpload.vue'
 import { wineService } from '@/services/wineService'
 
 const props = defineProps({

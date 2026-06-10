@@ -8,37 +8,89 @@ namespace WineApp.Api.Services;
 public class WineService(AppDbContext db)
 {
     public async Task<List<WineDto>> GetAllAsync(
-        string? search,
-        int? rank,
-        int? year,
+        string? search = null,
+        int? rank = null,
+        int? year = null,
         string? color = null,
         string? country = null,
-        string? drinkStatus = null)
+        string? drinkStatus = null,
+        string? appellation = null,
+        string? cepage = null,
+        // ── New dedicated filters ────────────────────────────────────────────
+        string? name = null,
+        string? domain = null,
+        string[]? colors = null,
+        string[]? cepages = null,
+        int? recipeId = null)
     {
         var query = db.Wines.Include(w => w.Cepages).AsQueryable();
 
+        // Broad text search (backward-compat, also used by admin broad-search)
         if (!string.IsNullOrWhiteSpace(search))
         {
             var q = search.ToLower();
             query = query.Where(w =>
                 w.Name.ToLower().Contains(q) ||
                 w.Domain.ToLower().Contains(q) ||
-                w.Year.ToString().Contains(q) ||
-                (w.Country != null && w.Country.ToLower().Contains(q)) ||
                 (w.Region != null && w.Region.ToLower().Contains(q)) ||
                 (w.Appellation != null && w.Appellation.ToLower().Contains(q)) ||
-                (w.Color != null && w.Color.ToLower().Contains(q)) ||
                 w.Cepages.Any(c => c.CepageName.ToLower().Contains(q)));
+        }
+
+        // Dedicated name filter (partial match, name field only)
+        if (!string.IsNullOrWhiteSpace(name))
+        {
+            var n = name.ToLower();
+            query = query.Where(w => w.Name.ToLower().Contains(n));
+        }
+
+        // Dedicated domain filter (partial match, domain field only)
+        if (!string.IsNullOrWhiteSpace(domain))
+        {
+            var d = domain.ToLower();
+            query = query.Where(w => w.Domain.ToLower().Contains(d));
+        }
+
+        // Dedicated appellation filter (partial match)
+        if (!string.IsNullOrWhiteSpace(appellation))
+        {
+            var a = appellation.ToLower();
+            query = query.Where(w => w.Appellation != null && w.Appellation.ToLower().Contains(a));
+        }
+
+        // Multi-color filter — OR logic (new); fall back to single color (backward-compat)
+        if (colors is { Length: > 0 })
+        {
+            var lc = colors.Select(c => c.ToLower()).ToArray();
+            query = query.Where(w => w.Color != null && lc.Contains(w.Color.ToLower()));
+        }
+        else if (!string.IsNullOrWhiteSpace(color))
+        {
+            query = query.Where(w => w.Color == color);
+        }
+
+        // Multi-cépage filter — OR, case-insensitive exact match on cépage name (new)
+        if (cepages is { Length: > 0 })
+        {
+            var lc = cepages.Select(c => c.ToLower()).ToArray();
+            query = query.Where(w => w.Cepages.Any(cp => lc.Contains(cp.CepageName.ToLower())));
+        }
+        // Single cépage — partial match (backward-compat)
+        else if (!string.IsNullOrWhiteSpace(cepage))
+        {
+            var c = cepage.ToLower();
+            query = query.Where(w => w.Cepages.Any(cp => cp.CepageName.ToLower().Contains(c)));
         }
 
         if (rank.HasValue) query = query.Where(w => w.Rank == rank.Value);
         if (year.HasValue) query = query.Where(w => w.Year == year.Value);
 
-        if (!string.IsNullOrWhiteSpace(color))
-            query = query.Where(w => w.Color == color);
-
         if (!string.IsNullOrWhiteSpace(country))
             query = query.Where(w => w.Country != null && w.Country.ToLower() == country.ToLower());
+
+        // Pairing filter — wines linked to a specific recipe
+        if (recipeId.HasValue)
+            query = query.Where(w => w.RecipePairings.Any(p => p.RecipeId == recipeId.Value));
 
         if (!string.IsNullOrWhiteSpace(drinkStatus))
         {
@@ -56,7 +108,9 @@ public class WineService(AppDbContext db)
             };
         }
 
-        var wines = await query.OrderByDescending(w => w.CreatedAt).ToListAsync();
+        var wines = await query
+            .OrderByDescending(w => w.CreatedAt)
+            .ToListAsync();
         return wines.Select(ToDto).ToList();
     }
 

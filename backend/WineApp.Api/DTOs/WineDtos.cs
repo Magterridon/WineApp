@@ -38,21 +38,25 @@ public class AdminWineDto : WineDto
 
 public class AdminWinesQuery
 {
-    public string? Search       { get; set; }
-    public int?    Rank         { get; set; }
-    public int?    Year         { get; set; }
-    public string? Color        { get; set; }
-    public string? Region       { get; set; }
-    public string? Appellation  { get; set; }
-    public string? Cepage       { get; set; }
+    public string?   Search       { get; set; }    // broad text (backward-compat)
+    public string?   Name         { get; set; }    // dedicated name filter
+    public string?   Domain       { get; set; }    // dedicated domain filter
+    public int?      Rank         { get; set; }
+    public int?      Year         { get; set; }
+    public string?   Color        { get; set; }    // single (backward-compat)
+    public string[]? Colors       { get; set; }    // multi-select OR (new)
+    public string?   Region       { get; set; }
+    public string?   Appellation  { get; set; }
+    public string?   Cepage       { get; set; }    // single (backward-compat)
+    public string[]? Cepages      { get; set; }    // multi-select OR (new)
     /// <summary>null = all, true = only wines with image, false = only without image</summary>
-    public bool?   HasImage     { get; set; }
+    public bool?     HasImage     { get; set; }
     /// <summary>null = all, true = only wines with ≥1 pairing, false = only without</summary>
-    public bool?   HasPairing   { get; set; }
-    public string  SortBy       { get; set; } = "name";
-    public string  SortDir      { get; set; } = "asc";
-    public int     Page         { get; set; } = 1;
-    public int     PageSize     { get; set; } = 50;
+    public bool?     HasPairing   { get; set; }
+    public string    SortBy       { get; set; } = "name";
+    public string    SortDir      { get; set; } = "asc";
+    public int       Page         { get; set; } = 1;
+    public int       PageSize     { get; set; } = 50;
 }
 
 public class AdminWinesResponse

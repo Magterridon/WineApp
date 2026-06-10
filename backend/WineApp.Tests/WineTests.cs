@@ -277,9 +277,184 @@ public class WineTests(TestWebFactory factory) : IClassFixture<TestWebFactory>
         Assert.Equal("Meursault", wine.Appellation);
     }
 
+    [Fact]
+    public async Task GetWines_FilterByName_ReturnsOnlyMatchingWines()
+    {
+        var token = await TestClient.RegisterAndGetTokenAsync(_client);
+        TestClient.Authenticate(_client, token);
+
+        var n = System.Threading.Interlocked.Increment(ref _wineCounter);
+        var uniqueName = $"NameOnly{n}Château";
+        await _client.PostAsJsonAsync("/api/wines", new
+        {
+            name = uniqueName,
+            domain = "SomeDomainNotMatchingName",
+            year = 2020, rank = 3,
+            cepages = Array.Empty<object>()
+        });
+
+        var response = await _client.GetAsync($"/api/wines?name={uniqueName}");
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var wines = await response.Content.ReadFromJsonAsync<List<WineResponse>>();
+        Assert.NotEmpty(wines!);
+        Assert.All(wines!, w => Assert.Contains(uniqueName, w.Name, StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public async Task GetWines_FilterByDomain_ReturnsOnlyMatchingWines()
+    {
+        var token = await TestClient.RegisterAndGetTokenAsync(_client);
+        TestClient.Authenticate(_client, token);
+
+        var n = System.Threading.Interlocked.Increment(ref _wineCounter);
+        var uniqueDomain = $"DomainOnly{n}Estates";
+        await _client.PostAsJsonAsync("/api/wines", new
+        {
+            name = $"Wine {n}", domain = uniqueDomain, year = 2020, rank = 3,
+            cepages = Array.Empty<object>()
+        });
+
+        var response = await _client.GetAsync($"/api/wines?domain={uniqueDomain}");
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var wines = await response.Content.ReadFromJsonAsync<List<WineResponse>>();
+        Assert.NotEmpty(wines!);
+        Assert.All(wines!, w => Assert.Contains(uniqueDomain, w.Domain, StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public async Task GetWines_FilterByMultipleColors_ReturnsOnlySelectedColors()
+    {
+        var token = await TestClient.RegisterAndGetTokenAsync(_client);
+        TestClient.Authenticate(_client, token);
+
+        var n = System.Threading.Interlocked.Increment(ref _wineCounter);
+        await _client.PostAsJsonAsync("/api/wines", new
+        {
+            name = $"Red Wine {n}", domain = "Domain", year = 2020, rank = 3,
+            color = "Red", cepages = Array.Empty<object>()
+        });
+        await _client.PostAsJsonAsync("/api/wines", new
+        {
+            name = $"White Wine {n}", domain = "Domain", year = 2021, rank = 3,
+            color = "White", cepages = Array.Empty<object>()
+        });
+
+        var response = await _client.GetAsync("/api/wines?colors=Red&colors=White");
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var wines = await response.Content.ReadFromJsonAsync<List<WineResponse>>();
+        Assert.NotEmpty(wines!);
+        Assert.All(wines!, w => Assert.True(w.Color == "Red" || w.Color == "White"));
+    }
+
+    [Fact]
+    public async Task GetWines_FilterByMultipleCepages_ReturnsOnlyMatchingWines()
+    {
+        var token = await TestClient.RegisterAndGetTokenAsync(_client);
+        TestClient.Authenticate(_client, token);
+
+        var n = System.Threading.Interlocked.Increment(ref _wineCounter);
+        var cepage1 = $"Merlot{n}";
+        var cepage2 = $"Syrah{n}";
+        await _client.PostAsJsonAsync("/api/wines", new
+        {
+            name = $"Merlot Wine {n}", domain = "Domain", year = 2020, rank = 3,
+            cepages = new[] { new { cepageName = cepage1, percentage = 100 } }
+        });
+        await _client.PostAsJsonAsync("/api/wines", new
+        {
+            name = $"Syrah Wine {n}", domain = "Domain", year = 2021, rank = 3,
+            cepages = new[] { new { cepageName = cepage2, percentage = 100 } }
+        });
+
+        var response = await _client.GetAsync($"/api/wines?cepages={cepage1}&cepages={cepage2}");
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var wines = await response.Content.ReadFromJsonAsync<List<WineResponse>>();
+        Assert.NotEmpty(wines!);
+        Assert.All(wines!, w =>
+        {
+            bool hasCepage1 = w.Cepages.Any(c => c.CepageName.Equals(cepage1, StringComparison.OrdinalIgnoreCase));
+            bool hasCepage2 = w.Cepages.Any(c => c.CepageName.Equals(cepage2, StringComparison.OrdinalIgnoreCase));
+            Assert.True(hasCepage1 || hasCepage2, $"Wine '{w.Name}' does not have cepage {cepage1} or {cepage2}");
+        });
+    }
+
+    [Fact]
+    public async Task GetWines_FilterByRecipeId_ReturnsOnlyPairedWines()
+    {
+        var token = await TestClient.RegisterAdminAndGetTokenAsync(_client, factory);
+        TestClient.Authenticate(_client, token);
+
+        // Create a wine and a recipe, then pair them
+        var n = System.Threading.Interlocked.Increment(ref _wineCounter);
+        var wineResp = await _client.PostAsJsonAsync("/api/wines", new
+        {
+            name = $"Paired Wine {n}", domain = "Domain", year = 2020, rank = 3,
+            cepages = Array.Empty<object>()
+        });
+        var wine = await wineResp.Content.ReadFromJsonAsync<WineResponse>();
+
+        var recipeResp = await _client.PostAsJsonAsync("/api/recipes", new
+        {
+            name = $"Test Recipe {n}", description = "desc",
+            ingredients = new[] { "x" }, instructions = "do it.",
+            recipeType = "Main",
+            pairings = new[] { new { wineId = wine!.Id, notes = "great" } }
+        });
+        var recipe = await recipeResp.Content.ReadFromJsonAsync<RecipeRef>();
+
+        var response = await _client.GetAsync($"/api/wines?recipeId={recipe!.Id}");
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var wines = await response.Content.ReadFromJsonAsync<List<WineResponse>>();
+        Assert.Contains(wines!, w => w.Id == wine.Id);
+    }
+
+    [Fact]
+    public async Task GetWines_FilterByAppellation_ReturnsOnlyMatchingWines()
+    {
+        var token = await TestClient.RegisterAndGetTokenAsync(_client);
+        TestClient.Authenticate(_client, token);
+
+        var n = System.Threading.Interlocked.Increment(ref _wineCounter);
+        var uniqueApp = $"Appellation{n}Unique";
+        await _client.PostAsJsonAsync("/api/wines", new
+        {
+            name = $"App Wine {n}", domain = "App Domain", year = 2020, rank = 3,
+            appellation = uniqueApp, cepages = Array.Empty<object>()
+        });
+
+        var response = await _client.GetAsync($"/api/wines?appellation={uniqueApp}");
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var wines = await response.Content.ReadFromJsonAsync<List<WineResponse>>();
+        Assert.NotEmpty(wines!);
+        Assert.All(wines!, w => Assert.Contains(uniqueApp, w.Appellation, StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public async Task GetWines_FilterByCepage_ReturnsOnlyMatchingWines()
+    {
+        var token = await TestClient.RegisterAndGetTokenAsync(_client);
+        TestClient.Authenticate(_client, token);
+
+        var n = System.Threading.Interlocked.Increment(ref _wineCounter);
+        var uniqueCepage = $"Varietal{n}Unique";
+        await _client.PostAsJsonAsync("/api/wines", new
+        {
+            name = $"Cepage Wine {n}", domain = "Cepage Domain", year = 2021, rank = 3,
+            cepages = new[] { new { cepageName = uniqueCepage, percentage = 100 } }
+        });
+
+        var response = await _client.GetAsync($"/api/wines?cepage={uniqueCepage}");
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var wines = await response.Content.ReadFromJsonAsync<List<WineResponse>>();
+        Assert.NotEmpty(wines!);
+        Assert.All(wines!, w => Assert.Contains(w.Cepages,
+            c => c.CepageName.Contains(uniqueCepage, StringComparison.OrdinalIgnoreCase)));
+    }
+
     private record WineResponse(int Id, string Name, string Domain, int Year, int Rank,
         string? Color, string? Country, string? Region, string? Appellation,
         int? DrinkFromYear, int? DrinkToYear,
         List<CepageResponse> Cepages);
     private record CepageResponse(string CepageName, int? Percentage);
+    private record RecipeRef(int Id);
 }

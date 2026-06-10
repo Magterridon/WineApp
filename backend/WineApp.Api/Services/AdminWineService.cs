@@ -18,6 +18,7 @@ public class AdminWineService(AppDbContext db, IWebHostEnvironment env)
 
         // ── Filters ────────────────────────────────────────────────────────────
 
+        // Broad text search (backward-compat)
         if (!string.IsNullOrWhiteSpace(q.Search))
         {
             var s = q.Search.ToLower();
@@ -29,11 +30,33 @@ public class AdminWineService(AppDbContext db, IWebHostEnvironment env)
                 w.Cepages.Any(c => c.CepageName.ToLower().Contains(s)));
         }
 
+        // Dedicated name filter
+        if (!string.IsNullOrWhiteSpace(q.Name))
+        {
+            var n = q.Name.ToLower();
+            query = query.Where(w => w.Name.ToLower().Contains(n));
+        }
+
+        // Dedicated domain filter
+        if (!string.IsNullOrWhiteSpace(q.Domain))
+        {
+            var d = q.Domain.ToLower();
+            query = query.Where(w => w.Domain.ToLower().Contains(d));
+        }
+
         if (q.Rank.HasValue)       query = query.Where(w => w.Rank == q.Rank.Value);
         if (q.Year.HasValue)       query = query.Where(w => w.Year == q.Year.Value);
 
-        if (!string.IsNullOrWhiteSpace(q.Color))
+        // Multi-color OR (new); fall back to single color (backward-compat)
+        if (q.Colors is { Length: > 0 })
+        {
+            var lc = q.Colors.Select(c => c.ToLower()).ToArray();
+            query = query.Where(w => w.Color != null && lc.Contains(w.Color.ToLower()));
+        }
+        else if (!string.IsNullOrWhiteSpace(q.Color))
+        {
             query = query.Where(w => w.Color != null && w.Color.ToLower() == q.Color.ToLower());
+        }
 
         if (!string.IsNullOrWhiteSpace(q.Region))
             query = query.Where(w => w.Region != null && w.Region.ToLower() == q.Region.ToLower());
@@ -44,7 +67,13 @@ public class AdminWineService(AppDbContext db, IWebHostEnvironment env)
             query = query.Where(w => w.Appellation != null && w.Appellation.ToLower().Contains(a));
         }
 
-        if (!string.IsNullOrWhiteSpace(q.Cepage))
+        // Multi-cépage OR (new); fall back to single cépage (backward-compat)
+        if (q.Cepages is { Length: > 0 })
+        {
+            var lc = q.Cepages.Select(c => c.ToLower()).ToArray();
+            query = query.Where(w => w.Cepages.Any(cp => lc.Contains(cp.CepageName.ToLower())));
+        }
+        else if (!string.IsNullOrWhiteSpace(q.Cepage))
         {
             var c = q.Cepage.ToLower();
             query = query.Where(w => w.Cepages.Any(cp => cp.CepageName.ToLower().Contains(c)));

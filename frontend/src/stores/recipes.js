@@ -7,11 +7,11 @@ export const useRecipesStore = defineStore('recipes', () => {
   const loading = ref(false)
   const error = ref(null)
 
-  async function fetchRecipes(search = '') {
+  async function fetchRecipes(search = '', recipeType = '') {
     loading.value = true
     error.value = null
     try {
-      recipes.value = await recipeService.getAll(search)
+      recipes.value = await recipeService.getAll(search, recipeType)
     } catch (err) {
       error.value = err.message
     } finally {
