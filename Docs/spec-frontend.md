@@ -1,3 +1,6 @@
+# OBSOLETE
+This file is archived and should not be used as source of truth.
+
 # Wine Cellar App — Frontend Specification
 
 ## Goal
