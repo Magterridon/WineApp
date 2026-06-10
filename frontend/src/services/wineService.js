@@ -18,12 +18,34 @@ function toPayload(data) {
 
 export const wineService = {
   async getAll(filters = {}) {
-    const { search, color, country, drinkStatus } = filters
+    const {
+      search, name, domain,
+      color, colors,
+      country, drinkStatus,
+      rank, year,
+      appellation,
+      cepage, cepages,
+      recipeId
+    } = filters
     const params = {}
-    if (search?.trim()) params.search = search.trim()
-    if (color) params.color = color
-    if (country) params.country = country
-    if (drinkStatus) params.drinkStatus = drinkStatus
+    // Broad backward-compat search
+    if (search?.trim())        params.search      = search.trim()
+    // Dedicated field filters (new)
+    if (name?.trim())          params.name        = name.trim()
+    if (domain?.trim())        params.domain      = domain.trim()
+    if (appellation?.trim())   params.appellation = appellation.trim()
+    // Color: prefer multi-select array; fall back to single string
+    if (colors?.length)        params.colors      = colors          // Axios serialises as ?colors=Red&colors=White
+    else if (color)            params.color       = color
+    // Cépage: prefer multi-select array; fall back to single string
+    if (cepages?.length)       params.cepages     = cepages
+    else if (cepage?.trim())   params.cepage      = cepage.trim()
+    // Other facets
+    if (country)               params.country     = country
+    if (drinkStatus)           params.drinkStatus = drinkStatus
+    if (rank)                  params.rank        = rank
+    if (year)                  params.year        = year
+    if (recipeId)              params.recipeId    = recipeId
     const { data } = await api.get('/api/wines', { params })
     return data.map(normalizeWine)
   },
@@ -51,5 +73,14 @@ export const wineService = {
 
   async delete(id) {
     await api.delete(`/api/wines/${id}`)
+  },
+
+  async uploadImage(file) {
+    const form = new FormData()
+    form.append('file', file)
+    const { data } = await api.post('/api/wines/upload-image', form, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    })
+    return data.imageUrl
   }
 }

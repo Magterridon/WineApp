@@ -186,6 +186,30 @@ public class RecipeTests(TestWebFactory factory) : IClassFixture<TestWebFactory>
         Assert.Contains(recipes!, r => r.Name == "Unique Searchable Recipe");
     }
 
+    [Fact]
+    public async Task GetRecipes_FilterByRecipeType_ReturnsOnlyMatchingType()
+    {
+        var token = await TestClient.RegisterAdminAndGetTokenAsync(_client, factory);
+        TestClient.Authenticate(_client, token);
+
+        // Ensure at least one Dessert recipe exists
+        await _client.PostAsJsonAsync("/api/recipes", new
+        {
+            name = $"Dessert Recipe {Guid.NewGuid():N}",
+            description = "Sweet dish",
+            ingredients = new[] { "sugar", "flour" },
+            instructions = "Bake it.",
+            recipeType = "Dessert",
+            pairings = Array.Empty<object>()
+        });
+
+        var response = await _client.GetAsync("/api/recipes?recipeType=Dessert");
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var recipes = await response.Content.ReadFromJsonAsync<List<RecipeResponse>>();
+        Assert.NotEmpty(recipes!);
+        Assert.All(recipes!, r => Assert.Equal("Dessert", r.RecipeType));
+    }
+
     private record RecipeResponse(int Id, string Name, string Description, string[] Ingredients, string RecipeType, PairingResponse[] Pairings);
     private record PairingResponse(int WineId, string? Notes);
     private record WineRef(int Id);

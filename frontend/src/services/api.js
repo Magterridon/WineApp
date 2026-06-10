@@ -1,7 +1,8 @@
 import axios from 'axios'
 
 const api = axios.create({
-  baseURL: 'http://localhost:5254'
+  baseURL: 'http://localhost:5254',
+  paramsSerializer: { indexes: null }   // serialize arrays as ?key=v1&key=v2 (no brackets) — required for ASP.NET Core [FromQuery] string[] binding
 })
 
 api.interceptors.request.use(config => {

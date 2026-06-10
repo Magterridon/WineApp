@@ -21,19 +21,25 @@ export const adminService = {
    */
   async getWines(query = {}) {
     const params = {}
-    if (query.search?.trim())     params.search      = query.search.trim()
-    if (query.rank)               params.rank        = query.rank
-    if (query.year)               params.year        = query.year
-    if (query.color)              params.color       = query.color
-    if (query.region?.trim())     params.region      = query.region.trim()
-    if (query.appellation?.trim())params.appellation = query.appellation.trim()
-    if (query.cepage?.trim())     params.cepage      = query.cepage.trim()
-    if (query.hasImage != null)   params.hasImage    = query.hasImage
-    if (query.hasPairing != null) params.hasPairing  = query.hasPairing
-    if (query.sortBy)             params.sortBy      = query.sortBy
-    if (query.sortDir)            params.sortDir     = query.sortDir
-    if (query.page)               params.page        = query.page
-    if (query.pageSize)           params.pageSize    = query.pageSize
+    // Backward-compat broad search
+    if (query.search?.trim())      params.search      = query.search.trim()
+    // Dedicated field filters (new)
+    if (query.name?.trim())        params.name        = query.name.trim()
+    if (query.domain?.trim())      params.domain      = query.domain.trim()
+    if (query.appellation?.trim()) params.appellation = query.appellation.trim()
+    // Multi-select arrays — Axios serialises as repeated params (?colors=Red&colors=White)
+    if (query.colors?.length)      params.colors      = query.colors
+    if (query.cepages?.length)     params.cepages     = query.cepages
+    // Other filters
+    if (query.rank)                params.rank        = query.rank
+    if (query.year)                params.year        = query.year
+    if (query.region?.trim())      params.region      = query.region.trim()
+    if (query.hasImage != null)    params.hasImage    = query.hasImage
+    if (query.hasPairing != null)  params.hasPairing  = query.hasPairing
+    if (query.sortBy)              params.sortBy      = query.sortBy
+    if (query.sortDir)             params.sortDir     = query.sortDir
+    if (query.page)                params.page        = query.page
+    if (query.pageSize)            params.pageSize    = query.pageSize
 
     const { data } = await api.get('/api/admin/wines', { params })
     return data

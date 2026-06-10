@@ -26,8 +26,37 @@
     <AlertMessage :message="error" @dismiss="error = ''" />
     <AlertMessage :message="successMsg" type="success" :dismissible="false" />
 
-    <div class="mb-3">
-      <SearchBar v-model="search" placeholder="Search by name, ingredient, type, wine pairing..." />
+    <!-- Search + recipe-type filters -->
+    <div class="card border-0 bg-light mb-3">
+      <div class="card-body py-2 px-3">
+        <div class="row g-2 align-items-center">
+          <div class="col-12 col-sm-6">
+            <input
+              v-model="search"
+              type="text"
+              class="form-control form-control-sm"
+              placeholder="Search by name, ingredient, wine pairing…"
+            />
+          </div>
+          <div class="col-12 col-sm-6">
+            <div class="d-flex flex-wrap gap-2 align-items-center">
+              <button
+                class="btn btn-sm"
+                :class="activeType === '' ? 'btn-dark' : 'btn-outline-secondary'"
+                @click="setType('')"
+              >All types</button>
+              <button
+                v-for="t in RECIPE_TYPES"
+                :key="t.value"
+                class="btn btn-sm"
+                :class="activeType === t.value ? 'text-white' : 'btn-outline-secondary'"
+                :style="activeType === t.value ? `background-color: #4a1020; border-color: #4a1020;` : ''"
+                @click="setType(t.value)"
+              >{{ t.label }}</button>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <LoadingSpinner v-if="recipesStore.loading" />
@@ -54,23 +83,39 @@ import { useRecipesStore } from '@/stores/recipes'
 import { useAuthStore } from '@/stores/auth'
 import RecipeCard from '@/components/RecipeCard.vue'
 import RecipeForm from '@/components/RecipeForm.vue'
-import SearchBar from '@/components/SearchBar.vue'
 import LoadingSpinner from '@/components/LoadingSpinner.vue'
 import AlertMessage from '@/components/AlertMessage.vue'
+
+const RECIPE_TYPES = [
+  { value: 'Starter', label: 'Starter' },
+  { value: 'Main',    label: 'Main' },
+  { value: 'Dessert', label: 'Dessert' },
+  { value: 'Other',   label: 'Other' },
+]
 
 const recipesStore = useRecipesStore()
 const authStore = useAuthStore()
 
-const search = ref('')
-const showForm = ref(false)
-const error = ref('')
+const search     = ref('')
+const activeType = ref('')
+const showForm   = ref(false)
+const error      = ref('')
 const successMsg = ref('')
 
 let searchTimer
 
-watch(search, val => {
+function applyFilters() {
+  recipesStore.fetchRecipes(search.value, activeType.value)
+}
+
+function setType(t) {
+  activeType.value = t
+  applyFilters()
+}
+
+watch(search, () => {
   clearTimeout(searchTimer)
-  searchTimer = setTimeout(() => recipesStore.fetchRecipes(val), 300)
+  searchTimer = setTimeout(applyFilters, 300)
 })
 
 async function handleCreate(data) {
@@ -86,5 +131,5 @@ async function handleCreate(data) {
   }
 }
 
-onMounted(() => recipesStore.fetchRecipes())
+onMounted(() => applyFilters())
 </script>

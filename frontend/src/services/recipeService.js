@@ -13,8 +13,10 @@ function normalizeRecipe(recipe) {
 }
 
 export const recipeService = {
-  async getAll(search = '') {
-    const params = search.trim() ? { search } : {}
+  async getAll(search = '', recipeType = '') {
+    const params = {}
+    if (search.trim())  params.search     = search.trim()
+    if (recipeType)     params.recipeType = recipeType
     const { data } = await api.get('/api/recipes', { params })
     return data.map(normalizeRecipe)
   },
