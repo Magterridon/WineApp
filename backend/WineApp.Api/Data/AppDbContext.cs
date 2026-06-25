@@ -14,6 +14,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<RecipeWinePairing> RecipeWinePairings => Set<RecipeWinePairing>();
     public DbSet<WineAppellation> WineAppellations => Set<WineAppellation>();
     public DbSet<DrinkRecord> DrinkRecords => Set<DrinkRecord>();
+    public DbSet<PairingRule> PairingRules => Set<PairingRule>();
+    public DbSet<PairingRuleRecipe> PairingRuleRecipes => Set<PairingRuleRecipe>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -74,5 +76,18 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             .HasForeignKey(d => d.RecipeId)
             .OnDelete(DeleteBehavior.SetNull)
             .IsRequired(false);
+
+        builder.Entity<PairingRuleRecipe>()
+            .HasKey(rt => new { rt.PairingRuleId, rt.RecipeId });
+
+        builder.Entity<PairingRuleRecipe>()
+            .HasOne(rt => rt.Rule).WithMany(r => r.RecipeTargets)
+            .HasForeignKey(rt => rt.PairingRuleId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<PairingRuleRecipe>()
+            .HasOne(rt => rt.Recipe).WithMany()
+            .HasForeignKey(rt => rt.RecipeId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }

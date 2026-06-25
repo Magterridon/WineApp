@@ -1,289 +1,194 @@
 <template>
-  <div class="container-fluid py-4">
+  <div class="space-y-4">
 
-    <!-- Page header -->
-    <div class="d-flex align-items-center mb-4 gap-3">
-      <h1 class="h3 mb-0">🍷 Wine Catalog Admin</h1>
-      <span class="badge bg-danger">Admin only</span>
+    <!-- Header -->
+    <div class="flex items-center gap-3">
+      <h1 class="page-title">Wine Catalog</h1>
+      <span class="label-caps border border-base-300 px-2.5 py-0.5 rounded-full">Admin</span>
     </div>
 
-    <!-- Alert feedback -->
-    <div v-if="alert.message" :class="`alert alert-${alert.type} alert-dismissible`" role="alert">
-      {{ alert.message }}
-      <button type="button" class="btn-close" @click="alert.message = ''" aria-label="Close"></button>
-    </div>
+    <AlertMessage v-if="alert.message" :message="alert.message" :type="alert.type" @dismiss="alert.message = ''" />
 
-    <!-- ── Filters ─────────────────────────────────────────────────────── -->
-    <div class="card mb-3 border-0 bg-light">
-      <div class="card-body py-2 px-3">
+    <!-- Filters -->
+    <div class="filter-panel">
+      <input v-model="filters.search" type="text" class="input input-bordered input-sm w-full" placeholder="Quick search: name, domain, appellation, cépage…" @keyup.enter="applyFilters" />
 
-        <!-- Row 0: Quick search (broad text across name/domain/appellation/cepage) -->
-        <div class="mb-2">
-          <label class="form-label small mb-1">Quick search</label>
-          <input
-            v-model="filters.search"
-            type="text"
-            class="form-control form-control-sm"
-            placeholder="Search across name, domain, appellation, cépage…"
-            @keyup.enter="applyFilters"
-          />
-        </div>
-
-        <!-- Row 1: Name / Domain / Appellation -->
-        <div class="row g-2 mb-2">
-          <div class="col-12 col-md-4">
-            <label class="form-label small mb-1">Name</label>
-            <input
-              v-model="filters.name"
-              type="text"
-              class="form-control form-control-sm"
-              placeholder="e.g. Château Margaux"
-              @keyup.enter="applyFilters"
-            />
-          </div>
-          <div class="col-12 col-md-4">
-            <label class="form-label small mb-1">Domain</label>
-            <input
-              v-model="filters.domain"
-              type="text"
-              class="form-control form-control-sm"
-              placeholder="e.g. Domaine de la Romanée-Conti"
-              @keyup.enter="applyFilters"
-            />
-          </div>
-          <div class="col-12 col-md-4">
-            <label class="form-label small mb-1">Appellation</label>
-            <input
-              v-model="filters.appellation"
-              type="text"
-              class="form-control form-control-sm"
-              placeholder="e.g. Pauillac"
-              @keyup.enter="applyFilters"
-            />
-          </div>
-        </div>
-
-        <!-- Row 2: Cépage -->
-        <div class="mb-2">
-          <label class="form-label small mb-1">Cépage</label>
-          <CepageSelect v-model="filters.cepages" />
-        </div>
-
-        <!-- Row 3: Color multi-select -->
-        <div class="mb-2">
-          <label class="form-label small mb-1">Color</label>
-          <WineColorPicker v-model="filters.colors" />
-        </div>
-
-        <!-- Row 4: Vintage / Rank / Image / Pairing + buttons -->
-        <div class="row g-2 align-items-end">
-          <div class="col-auto">
-            <label class="form-label small mb-1">Vintage</label>
-            <input
-              v-model="filters.year"
-              type="number"
-              class="form-control form-control-sm"
-              placeholder="2015"
-              style="width:90px"
-              min="1800" max="2100"
-            />
-          </div>
-          <div class="col-auto">
-            <label class="form-label small mb-1">Rank</label>
-            <select v-model="filters.rank" class="form-select form-select-sm" style="width:110px">
-              <option value="">All</option>
-              <option value="5">★★★★★</option>
-              <option value="4">★★★★</option>
-              <option value="3">★★★</option>
-              <option value="2">★★</option>
-              <option value="1">★</option>
-            </select>
-          </div>
-          <div class="col-auto">
-            <label class="form-label small mb-1">Image</label>
-            <select v-model="filters.hasImage" class="form-select form-select-sm" style="width:115px">
-              <option value="">All</option>
-              <option value="false">Missing ❌</option>
-              <option value="true">Has ✅</option>
-            </select>
-          </div>
-          <div class="col-auto">
-            <label class="form-label small mb-1">Pairing</label>
-            <select v-model="filters.hasPairing" class="form-select form-select-sm" style="width:115px">
-              <option value="">All</option>
-              <option value="false">Missing ❌</option>
-              <option value="true">Has ✅</option>
-            </select>
-          </div>
-          <div class="col-auto ms-auto d-flex gap-2 align-items-end">
-            <button class="btn btn-primary btn-sm" @click="applyFilters">🔍 Search</button>
-            <button class="btn btn-outline-secondary btn-sm" @click="clearFilters">Clear</button>
-          </div>
-        </div>
-
-        <!-- Result count -->
-        <div class="mt-2 text-muted small d-flex align-items-center gap-2">
-          <template v-if="!loading">
-            <span v-if="selectedIds.size > 0" class="text-primary fw-semibold">
-              {{ selectedIds.size }} selected ·
-            </span>
-            Showing {{ showingFrom }}–{{ showingTo }} of {{ response.total }} wines
-          </template>
-        </div>
-
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <input v-model="filters.name" type="text" class="input input-bordered input-sm w-full" placeholder="Name…" @keyup.enter="applyFilters" />
+        <input v-model="filters.domain" type="text" class="input input-bordered input-sm w-full" placeholder="Domain…" @keyup.enter="applyFilters" />
+        <input v-model="filters.appellation" type="text" class="input input-bordered input-sm w-full" placeholder="Appellation…" @keyup.enter="applyFilters" />
       </div>
+
+      <div>
+        <label class="label-caps mb-1.5">Cépage</label>
+        <CepageSelect v-model="filters.cepages" />
+      </div>
+
+      <div>
+        <label class="label-caps mb-1.5">Color</label>
+        <WineColorPicker v-model="filters.colors" />
+      </div>
+
+      <div class="flex flex-wrap gap-2 items-end">
+        <div>
+          <label class="label-caps mb-1">Vintage</label>
+          <input v-model="filters.year" type="number" class="input input-bordered input-sm w-24" placeholder="2015" min="1800" max="2100" />
+        </div>
+        <div>
+          <label class="label-caps mb-1">Rank</label>
+          <select v-model="filters.rank" class="select select-bordered select-sm">
+            <option value="">All</option>
+            <option value="5">★★★★★</option>
+            <option value="4">★★★★</option>
+            <option value="3">★★★</option>
+            <option value="2">★★</option>
+            <option value="1">★</option>
+          </select>
+        </div>
+        <div>
+          <label class="label-caps mb-1">Image</label>
+          <select v-model="filters.hasImage" class="select select-bordered select-sm">
+            <option value="">All</option>
+            <option value="false">Missing ❌</option>
+            <option value="true">Has ✅</option>
+          </select>
+        </div>
+        <div>
+          <label class="label-caps mb-1">Pairing</label>
+          <select v-model="filters.hasPairing" class="select select-bordered select-sm">
+            <option value="">All</option>
+            <option value="false">Missing ❌</option>
+            <option value="true">Has ✅</option>
+          </select>
+        </div>
+        <div class="flex gap-2 ml-auto">
+          <button class="btn btn-primary btn-sm" @click="applyFilters">Search</button>
+          <button class="btn btn-ghost btn-sm border border-base-300" @click="clearFilters">Clear</button>
+        </div>
+      </div>
+
+      <p v-if="!loading" class="text-xs text-base-content/40">
+        <span v-if="selectedIds.size > 0" class="text-primary font-semibold">{{ selectedIds.size }} selected · </span>
+        Showing {{ showingFrom }}–{{ showingTo }} of {{ response.total }} wines
+      </p>
     </div>
 
-    <!-- ── Bulk actions panel ─────────────────────────────────────────── -->
-    <div v-if="selectedIds.size > 0" class="card border-primary mb-3">
-      <div class="card-header bg-primary text-white py-2 d-flex align-items-center gap-3">
-        <strong>{{ selectedIds.size }} wine(s) selected</strong>
-        <button class="btn btn-sm btn-outline-light ms-auto" @click="clearSelection">
-          Clear selection
-        </button>
+    <!-- Bulk actions -->
+    <div v-if="selectedIds.size > 0" class="bg-base-100 rounded-2xl border-2 border-primary p-4 space-y-4">
+      <div class="flex items-center gap-3">
+        <span class="font-semibold text-primary">{{ selectedIds.size }} wine(s) selected</span>
+        <button class="btn btn-xs btn-ghost ml-auto" @click="clearSelection">Clear selection</button>
       </div>
-      <div class="card-body">
-        <div class="row g-4">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 
-          <!-- Image bulk update -->
-          <div class="col-12 col-md-6">
-            <h6 class="fw-semibold">📸 Bulk image update</h6>
-            <ul class="nav nav-tabs nav-sm mb-2">
-              <li class="nav-item">
-                <button :class="['nav-link py-1 px-3 small', imageTab === 'url' ? 'active' : '']" @click="imageTab = 'url'">URL</button>
-              </li>
-              <li class="nav-item">
-                <button :class="['nav-link py-1 px-3 small', imageTab === 'upload' ? 'active' : '']" @click="imageTab = 'upload'">Upload file</button>
-              </li>
+        <!-- Bulk image -->
+        <div class="space-y-2">
+          <h3 class="font-semibold text-sm">📸 Bulk image update</h3>
+          <div class="tabs tabs-boxed tabs-sm w-fit">
+            <button :class="['tab', imageTab === 'url' ? 'tab-active' : '']" @click="imageTab = 'url'">URL</button>
+            <button :class="['tab', imageTab === 'upload' ? 'tab-active' : '']" @click="imageTab = 'upload'">Upload</button>
+          </div>
+          <div v-if="imageTab === 'url'">
+            <input v-model="bulkImage.url" type="url" class="input input-bordered input-sm w-full" placeholder="https://example.com/wine.jpg" />
+          </div>
+          <div v-else class="flex gap-2">
+            <input ref="fileInput" type="file" accept="image/jpeg,image/png,image/gif,image/webp" class="file-input file-input-bordered file-input-sm flex-1" @change="onFileSelected" />
+            <button class="btn btn-sm btn-ghost border border-base-300 whitespace-nowrap" :disabled="!bulkImage.file || uploading" @click="uploadFile">
+              <span v-if="uploading" class="loading loading-spinner loading-xs"></span>
+              Upload
+            </button>
+          </div>
+          <div v-if="bulkImage.url" class="flex gap-2 items-center">
+            <img :src="bulkImage.url" alt="Preview" class="h-10 w-10 object-cover rounded-lg" @error="$event.target.style.display='none'" />
+            <span class="text-xs text-base-content/50 truncate max-w-[200px]">{{ bulkImage.url }}</span>
+          </div>
+          <button class="btn btn-sm btn-success" :disabled="!bulkImage.url || applyingImage" @click="applyBulkImage">
+            <span v-if="applyingImage" class="loading loading-spinner loading-xs"></span>
+            Apply to {{ selectedIds.size }} wine(s)
+          </button>
+        </div>
+
+        <!-- Bulk pairing -->
+        <div class="space-y-2">
+          <h3 class="font-semibold text-sm">🍽️ Bulk pairing assignment</h3>
+          <div class="relative">
+            <input v-model="recipeSearch" type="text" class="input input-bordered input-sm w-full" placeholder="Search recipes…" @input="searchRecipes" @focus="showRecipeDropdown = true" />
+            <ul v-if="showRecipeDropdown && recipeSearchResults.length" class="absolute z-20 w-full mt-1 bg-base-100 border border-base-300 rounded-xl shadow-lg max-h-44 overflow-y-auto" @mousedown.prevent>
+              <li
+                v-for="recipe in recipeSearchResults"
+                :key="recipe.id"
+                class="px-3 py-2 text-sm hover:bg-base-200 cursor-pointer"
+                :class="selectedRecipeIds.has(recipe.id) ? 'text-primary font-medium' : ''"
+                @click="toggleRecipe(recipe)"
+              >{{ recipe.name }} {{ selectedRecipeIds.has(recipe.id) ? '✓' : '' }}</li>
             </ul>
-            <div v-if="imageTab === 'url'">
-              <input v-model="bulkImage.url" type="url" class="form-control form-control-sm" placeholder="https://example.com/wine.jpg" />
-            </div>
-            <div v-else class="d-flex gap-2 align-items-center">
-              <input ref="fileInput" type="file" accept="image/jpeg,image/png,image/gif,image/webp" class="form-control form-control-sm" @change="onFileSelected" />
-              <button class="btn btn-sm btn-outline-secondary text-nowrap" :disabled="!bulkImage.file || uploading" @click="uploadFile">
-                <span v-if="uploading" class="spinner-border spinner-border-sm me-1"></span>
-                Upload
-              </button>
-            </div>
-            <div v-if="bulkImage.url" class="mt-2 d-flex gap-2 align-items-center">
-              <img :src="bulkImage.url" alt="Preview" style="height:40px;width:40px;object-fit:cover;border-radius:4px" @error="$event.target.style.display='none'" />
-              <span class="small text-muted text-truncate" style="max-width:220px">{{ bulkImage.url }}</span>
-            </div>
-            <button class="btn btn-sm btn-success mt-2" :disabled="!bulkImage.url || applyingImage" @click="applyBulkImage">
-              <span v-if="applyingImage" class="spinner-border spinner-border-sm me-1"></span>
-              Apply to {{ selectedIds.size }} wine(s)
-            </button>
           </div>
-
-          <!-- Pairing bulk assign -->
-          <div class="col-12 col-md-6">
-            <h6 class="fw-semibold">🍽️ Bulk pairing assignment</h6>
-            <div class="position-relative mb-2">
-              <input v-model="recipeSearch" type="text" class="form-control form-control-sm" placeholder="Search recipes…" @input="searchRecipes" @focus="showRecipeDropdown = true" />
-              <ul v-if="showRecipeDropdown && recipeSearchResults.length" class="list-group position-absolute w-100 shadow-sm" style="z-index:200;max-height:180px;overflow-y:auto" @mousedown.prevent>
-                <li
-                  v-for="recipe in recipeSearchResults"
-                  :key="recipe.id"
-                  class="list-group-item list-group-item-action py-1 small"
-                  :class="{ active: selectedRecipeIds.has(recipe.id) }"
-                  @click="toggleRecipe(recipe)"
-                >
-                  {{ recipe.name }}
-                  <span v-if="selectedRecipeIds.has(recipe.id)" class="ms-1">✓</span>
-                </li>
-              </ul>
-            </div>
-            <div class="d-flex flex-wrap gap-1 mb-2" v-if="selectedRecipes.length">
-              <span v-for="r in selectedRecipes" :key="r.id" class="badge bg-secondary d-flex align-items-center gap-1">
-                {{ r.name }}
-                <button type="button" class="btn-close btn-close-white" style="font-size:.6rem" @click="removeRecipe(r.id)" :aria-label="`Remove ${r.name}`"></button>
-              </span>
-            </div>
-            <p v-else class="text-muted small mb-2">No recipes selected yet</p>
-            <button class="btn btn-sm btn-success" :disabled="!selectedRecipes.length || applyingPairings" @click="applyBulkPairings">
-              <span v-if="applyingPairings" class="spinner-border spinner-border-sm me-1"></span>
-              Assign {{ selectedRecipes.length }} recipe(s) to {{ selectedIds.size }} wine(s)
-            </button>
+          <div v-if="selectedRecipes.length" class="flex flex-wrap gap-1">
+            <span v-for="r in selectedRecipes" :key="r.id" class="badge badge-sm badge-secondary gap-1">
+              {{ r.name }}
+              <button type="button" class="text-xs leading-none ml-0.5" @click="removeRecipe(r.id)">✕</button>
+            </span>
           </div>
-
+          <p v-else class="text-xs text-base-content/40">No recipes selected yet</p>
+          <button class="btn btn-sm btn-success" :disabled="!selectedRecipes.length || applyingPairings" @click="applyBulkPairings">
+            <span v-if="applyingPairings" class="loading loading-spinner loading-xs"></span>
+            Assign {{ selectedRecipes.length }} recipe(s) to {{ selectedIds.size }} wine(s)
+          </button>
         </div>
       </div>
     </div>
 
-    <!-- ── Wine table ─────────────────────────────────────────────────── -->
-    <div class="card border-0 shadow-sm">
-      <div class="table-responsive">
-        <table class="table table-hover table-sm mb-0 align-middle">
-          <thead class="table-dark">
+    <!-- Wine table -->
+    <div class="rounded-2xl border border-base-300 overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="table table-sm">
+          <thead class="bg-base-200/60 text-base-content/60">
             <tr>
-              <th style="width:36px">
-                <input
-                  type="checkbox"
-                  class="form-check-input"
-                  :checked="allOnPageSelected"
-                  :indeterminate.prop="someOnPageSelected && !allOnPageSelected"
-                  @change="toggleSelectPage"
-                  title="Select all on page"
-                />
+              <th class="w-8">
+                <input type="checkbox" class="checkbox checkbox-sm checkbox-primary" :checked="allOnPageSelected" :indeterminate.prop="someOnPageSelected && !allOnPageSelected" @change="toggleSelectPage" />
               </th>
-              <th style="width:36px" title="Image">Img</th>
-              <th style="width:36px" title="Pairing">Pair</th>
-              <th class="sortable" @click="setSort('name')">
-                Name <SortIcon :active="sort.by === 'name'" :dir="sort.dir" />
-              </th>
-              <th class="sortable" @click="setSort('domain')">
-                Domain <SortIcon :active="sort.by === 'domain'" :dir="sort.dir" />
-              </th>
-              <th class="sortable" @click="setSort('year')">
-                Vintage <SortIcon :active="sort.by === 'year'" :dir="sort.dir" />
-              </th>
-              <th class="sortable" @click="setSort('rank')">
-                Rank <SortIcon :active="sort.by === 'rank'" :dir="sort.dir" />
-              </th>
-              <th>Color</th>
-              <th class="sortable" @click="setSort('appellation')">
-                Appellation <SortIcon :active="sort.by === 'appellation'" :dir="sort.dir" />
-              </th>
-              <th style="width:80px"></th>
+              <th class="w-8">Img</th>
+              <th class="w-8">Pair</th>
+              <th class="cursor-pointer select-none" @click="setSort('name')">Name {{ sortIcon('name') }}</th>
+              <th class="cursor-pointer select-none hidden sm:table-cell" @click="setSort('domain')">Domain {{ sortIcon('domain') }}</th>
+              <th class="cursor-pointer select-none" @click="setSort('year')">Year {{ sortIcon('year') }}</th>
+              <th class="cursor-pointer select-none hidden md:table-cell" @click="setSort('rank')">Rank {{ sortIcon('rank') }}</th>
+              <th class="hidden md:table-cell">Color</th>
+              <th class="hidden lg:table-cell cursor-pointer select-none" @click="setSort('appellation')">Appellation {{ sortIcon('appellation') }}</th>
+              <th class="w-16"></th>
             </tr>
           </thead>
           <tbody>
             <tr v-if="loading">
-              <td colspan="10" class="text-center py-4">
-                <div class="spinner-border spinner-border-sm text-secondary me-2"></div>
-                Loading…
+              <td colspan="10" class="text-center py-8">
+                <span class="loading loading-spinner loading-sm text-primary"></span>
               </td>
             </tr>
             <tr v-else-if="response.items.length === 0">
-              <td colspan="10" class="text-center py-4 text-muted">No wines match your filters.</td>
+              <td colspan="10" class="text-center py-8 text-base-content/40">No wines match your filters.</td>
             </tr>
-            <tr v-else v-for="wine in response.items" :key="wine.id" :class="{ 'table-active': selectedIds.has(wine.id) }">
+            <tr
+              v-else
+              v-for="wine in response.items"
+              :key="wine.id"
+              class="hover"
+              :class="selectedIds.has(wine.id) ? 'bg-primary/5' : ''"
+            >
+              <td><input type="checkbox" class="checkbox checkbox-sm" :checked="selectedIds.has(wine.id)" @change="toggleWine(wine.id)" /></td>
+              <td class="text-center">{{ wine.hasImage ? '✅' : '❌' }}</td>
+              <td class="text-center">{{ wine.hasPairing ? '✅' : '❌' }}</td>
+              <td class="font-medium">
+                <router-link :to="`/wines/${wine.id}`" class="hover:text-primary no-underline">{{ wine.name }}</router-link>
+              </td>
+              <td class="text-base-content/50 text-sm hidden sm:table-cell">{{ wine.domain }}</td>
+              <td class="text-sm">{{ wine.year }}</td>
+              <td class="text-amber-400 text-xs hidden md:table-cell">{{ '★'.repeat(wine.rank) }}</td>
+              <td class="hidden md:table-cell">
+                <WineColorBadge v-if="wine.color" :color="wine.color" />
+              </td>
+              <td class="text-xs text-base-content/50 hidden lg:table-cell">{{ wine.appellation }}</td>
               <td>
-                <input type="checkbox" class="form-check-input" :checked="selectedIds.has(wine.id)" @change="toggleWine(wine.id)" />
-              </td>
-              <td>
-                <span :title="wine.hasImage ? wine.imageUrl : 'No image'" style="font-size:1.1em">
-                  {{ wine.hasImage ? '✅' : '❌' }}
-                </span>
-              </td>
-              <td>
-                <span :title="wine.hasPairing ? `${wine.pairingCount} pairing(s)` : 'No pairings'" style="font-size:1.1em">
-                  {{ wine.hasPairing ? '✅' : '❌' }}
-                </span>
-              </td>
-              <td class="fw-medium">
-                <router-link :to="`/wines/${wine.id}`" class="text-decoration-none text-dark">{{ wine.name }}</router-link>
-              </td>
-              <td class="text-muted small">{{ wine.domain }}</td>
-              <td class="small">{{ wine.year }}</td>
-              <td class="small">{{ '★'.repeat(wine.rank) }}</td>
-              <td class="small">
-                <span v-if="wine.color" :class="colorBadgeClass(wine.color)" class="badge">{{ wine.color }}</span>
-              </td>
-              <td class="small text-muted">{{ wine.appellation }}</td>
-              <td>
-                <router-link :to="`/wines/${wine.id}`" class="btn btn-outline-secondary btn-sm py-0 px-2" title="Edit wine">Edit</router-link>
+                <router-link :to="`/wines/${wine.id}`" class="btn btn-xs btn-ghost border border-base-300">Edit</router-link>
               </td>
             </tr>
           </tbody>
@@ -291,38 +196,27 @@
       </div>
 
       <!-- Pagination -->
-      <div v-if="totalPages > 1" class="card-footer d-flex align-items-center justify-content-between py-2">
-        <button class="btn btn-sm btn-outline-secondary" :disabled="currentPage <= 1" @click="goToPage(currentPage - 1)">← Prev</button>
-        <span class="small text-muted">Page {{ currentPage }} of {{ totalPages }}</span>
-        <button class="btn btn-sm btn-outline-secondary" :disabled="currentPage >= totalPages" @click="goToPage(currentPage + 1)">Next →</button>
+      <div v-if="totalPages > 1" class="flex items-center justify-between p-3 border-t border-base-300">
+        <button class="btn btn-sm btn-ghost border border-base-300" :disabled="currentPage <= 1" @click="goToPage(currentPage - 1)">← Prev</button>
+        <span class="text-sm text-base-content/50">Page {{ currentPage }} of {{ totalPages }}</span>
+        <button class="btn btn-sm btn-ghost border border-base-300" :disabled="currentPage >= totalPages" @click="goToPage(currentPage + 1)">Next →</button>
       </div>
     </div>
-
   </div>
 </template>
 
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
-import { adminService }  from '@/services/adminService'
-import { recipeService } from '@/services/recipeService'
+import { adminService }      from '@/services/adminService'
+import { recipeService }     from '@/services/recipeService'
 import WineColorPicker from '@/components/WineColorPicker.vue'
 import CepageSelect    from '@/components/CepageSelect.vue'
+import AlertMessage    from '@/components/AlertMessage.vue'
+import WineColorBadge  from '@/components/ui/WineColorBadge.vue'
 
-// ── SortIcon (inline) ────────────────────────────────────────────────────
-const SortIcon = {
-  props: { active: Boolean, dir: String },
-  template: `
-    <span class="sort-icon ms-1" :class="active ? 'text-warning' : 'text-muted opacity-50'" style="font-size:.8em">
-      <template v-if="active">{{ dir === 'asc' ? '↑' : '↓' }}</template>
-      <template v-else>↕</template>
-    </span>
-  `
-}
-
-// ── State ────────────────────────────────────────────────────────────────
-const loading         = ref(false)
-const uploading       = ref(false)
-const applyingImage   = ref(false)
+const loading          = ref(false)
+const uploading        = ref(false)
+const applyingImage    = ref(false)
 const applyingPairings = ref(false)
 
 const alert = reactive({ message: '', type: 'success' })
@@ -330,66 +224,44 @@ const alert = reactive({ message: '', type: 'success' })
 const response = reactive({ items: [], total: 0, page: 1, pageSize: 50 })
 
 const filters = reactive({
-  search:      '',   // broad text (name/domain/appellation/cepage)
-  name:        '',
-  domain:      '',
-  appellation: '',
-  colors:      [],
-  cepages:     [],
-  rank:        '',
-  year:        '',
-  hasImage:    '',
-  hasPairing:  ''
+  search: '', name: '', domain: '', appellation: '',
+  colors: [], cepages: [], rank: '', year: '', hasImage: '', hasPairing: '',
 })
 
-const sort = reactive({ by: 'name', dir: 'asc' })
-
+const sort        = reactive({ by: 'name', dir: 'asc' })
 const currentPage = ref(1)
 const PAGE_SIZE   = 50
 
-// ── Sorting ─────────────────────────────────────────────────────────────
 function setSort(col) {
-  if (sort.by === col) {
-    sort.dir = sort.dir === 'asc' ? 'desc' : 'asc'
-  } else {
-    sort.by  = col
-    sort.dir = 'asc'
-  }
+  sort.dir = sort.by === col ? (sort.dir === 'asc' ? 'desc' : 'asc') : 'asc'
+  sort.by  = col
   applyFilters()
 }
+function sortIcon(col) { return sort.by === col ? (sort.dir === 'asc' ? '↑' : '↓') : '↕' }
 
-// ── Selection ────────────────────────────────────────────────────────────
-const selectedIds = ref(new Set())
-
+const selectedIds       = ref(new Set())
 const allOnPageSelected  = computed(() => response.items.length > 0 && response.items.every(w => selectedIds.value.has(w.id)))
 const someOnPageSelected = computed(() => response.items.some(w => selectedIds.value.has(w.id)))
 
 function toggleWine(id) {
-  const s = new Set(selectedIds.value)
-  s.has(id) ? s.delete(id) : s.add(id)
-  selectedIds.value = s
+  const s = new Set(selectedIds.value); s.has(id) ? s.delete(id) : s.add(id); selectedIds.value = s
 }
-
 function toggleSelectPage() {
   const s = new Set(selectedIds.value)
   if (allOnPageSelected.value) response.items.forEach(w => s.delete(w.id))
-  else                          response.items.forEach(w => s.add(w.id))
+  else response.items.forEach(w => s.add(w.id))
   selectedIds.value = s
 }
-
 function clearSelection() { selectedIds.value = new Set() }
 
-// ── Pagination ───────────────────────────────────────────────────────────
 const totalPages  = computed(() => Math.ceil(response.total / PAGE_SIZE) || 1)
 const showingFrom = computed(() => response.total === 0 ? 0 : (currentPage.value - 1) * PAGE_SIZE + 1)
 const showingTo   = computed(() => Math.min(currentPage.value * PAGE_SIZE, response.total))
 
-// ── Data loading ─────────────────────────────────────────────────────────
 async function loadWines(page = 1) {
-  loading.value = true
-  currentPage.value = page
+  loading.value = true; currentPage.value = page
   try {
-    const query = {
+    const data = await adminService.getWines({
       search:      filters.search      || undefined,
       name:        filters.name        || undefined,
       domain:      filters.domain      || undefined,
@@ -398,76 +270,44 @@ async function loadWines(page = 1) {
       cepages:     filters.cepages.length ? filters.cepages : undefined,
       rank:        filters.rank        ? Number(filters.rank) : undefined,
       year:        filters.year        ? Number(filters.year) : undefined,
-      hasImage:    filters.hasImage === '' ? undefined : filters.hasImage === 'true',
+      hasImage:    filters.hasImage   === '' ? undefined : filters.hasImage   === 'true',
       hasPairing:  filters.hasPairing === '' ? undefined : filters.hasPairing === 'true',
-      sortBy:      sort.by,
-      sortDir:     sort.dir,
-      page,
-      pageSize:    PAGE_SIZE
-    }
-    const data = await adminService.getWines(query)
-    response.items    = data.items
-    response.total    = data.total
-    response.page     = data.page
-    response.pageSize = data.pageSize
-  } catch (err) {
-    showAlert(err.message || 'Failed to load wines', 'danger')
-  } finally {
-    loading.value = false
-  }
+      sortBy:   sort.by, sortDir: sort.dir, page, pageSize: PAGE_SIZE,
+    })
+    response.items = data.items; response.total = data.total
+  } catch (err) { showAlert(err.message || 'Failed to load wines', 'danger') }
+  finally { loading.value = false }
 }
 
 function applyFilters() { clearSelection(); loadWines(1) }
-
 function clearFilters() {
-  Object.assign(filters, { search: '', name: '', domain: '', appellation: '', colors: [], cepages: [], rank: '', year: '', hasImage: '', hasPairing: '' })
-  sort.by  = 'name'
-  sort.dir = 'asc'
-  clearSelection()
-  loadWines(1)
+  Object.assign(filters, { search:'', name:'', domain:'', appellation:'', colors:[], cepages:[], rank:'', year:'', hasImage:'', hasPairing:'' })
+  sort.by = 'name'; sort.dir = 'asc'; clearSelection(); loadWines(1)
 }
+function goToPage(page) { loadWines(page); window.scrollTo({ top: 0, behavior: 'smooth' }) }
 
-function goToPage(page) {
-  loadWines(page)
-  window.scrollTo({ top: 0, behavior: 'smooth' })
-}
-
-// ── Bulk image ────────────────────────────────────────────────────────────
 const imageTab  = ref('url')
 const fileInput = ref(null)
 const bulkImage = reactive({ url: '', file: null })
 
-function onFileSelected(event) { bulkImage.file = event.target.files[0] || null }
+function onFileSelected(e) { bulkImage.file = e.target.files[0] || null }
 
 async function uploadFile() {
   if (!bulkImage.file) return
   uploading.value = true
-  try {
-    const result  = await adminService.uploadImage(bulkImage.file)
-    bulkImage.url = result.imageUrl
-    showAlert('Image uploaded. Click "Apply" to assign it to selected wines.', 'info')
-  } catch (err) {
-    showAlert(err.message || 'Upload failed', 'danger')
-  } finally {
-    uploading.value = false
-  }
+  try { const r = await adminService.uploadImage(bulkImage.file); bulkImage.url = r.imageUrl; showAlert('Image uploaded.', 'info') }
+  catch (err) { showAlert(err.message || 'Upload failed', 'danger') }
+  finally { uploading.value = false }
 }
 
 async function applyBulkImage() {
   if (!bulkImage.url || !selectedIds.value.size) return
   applyingImage.value = true
-  try {
-    const result = await adminService.bulkSetImage([...selectedIds.value], bulkImage.url)
-    showAlert(result.message || `Image applied to ${result.updated} wine(s)`, 'success')
-    await loadWines(currentPage.value)
-  } catch (err) {
-    showAlert(err.message || 'Failed to apply image', 'danger')
-  } finally {
-    applyingImage.value = false
-  }
+  try { const r = await adminService.bulkSetImage([...selectedIds.value], bulkImage.url); showAlert(r.message || `Applied to ${r.updated} wine(s)`, 'success'); await loadWines(currentPage.value) }
+  catch (err) { showAlert(err.message || 'Failed', 'danger') }
+  finally { applyingImage.value = false }
 }
 
-// ── Bulk pairings ─────────────────────────────────────────────────────────
 const recipeSearch        = ref('')
 const recipeSearchResults = ref([])
 const showRecipeDropdown  = ref(false)
@@ -487,49 +327,24 @@ function searchRecipes() {
 function toggleRecipe(recipe) {
   if (selectedRecipeIds.value.has(recipe.id)) removeRecipe(recipe.id)
   else selectedRecipes.value = [...selectedRecipes.value, { id: recipe.id, name: recipe.name }]
-  showRecipeDropdown.value = false
-  recipeSearch.value = ''
-  recipeSearchResults.value = []
+  showRecipeDropdown.value = false; recipeSearch.value = ''; recipeSearchResults.value = []
 }
-
 function removeRecipe(id) { selectedRecipes.value = selectedRecipes.value.filter(r => r.id !== id) }
 
 async function applyBulkPairings() {
   if (!selectedRecipes.value.length || !selectedIds.value.size) return
   applyingPairings.value = true
   try {
-    const result = await adminService.bulkAssignPairings([...selectedIds.value], selectedRecipes.value.map(r => r.id))
-    showAlert(result.message || `Created ${result.created} pairing(s)`, 'success')
-    await loadWines(currentPage.value)
-    selectedRecipes.value = []
-  } catch (err) {
-    showAlert(err.message || 'Failed to assign pairings', 'danger')
-  } finally {
-    applyingPairings.value = false
-  }
+    const r = await adminService.bulkAssignPairings([...selectedIds.value], selectedRecipes.value.map(r => r.id))
+    showAlert(r.message || `Created ${r.created} pairing(s)`, 'success'); await loadWines(currentPage.value); selectedRecipes.value = []
+  } catch (err) { showAlert(err.message || 'Failed', 'danger') }
+  finally { applyingPairings.value = false }
 }
 
-// ── Helpers ────────────────────────────────────────────────────────────────
 function showAlert(message, type = 'success') {
-  alert.message = message
-  alert.type    = type
+  alert.message = message; alert.type = type
   if (type === 'success' || type === 'info') setTimeout(() => { alert.message = '' }, 4000)
-}
-
-function colorBadgeClass(color) {
-  return { Red: 'bg-danger', White: 'bg-warning text-dark', Rosé: 'bg-pink text-dark', Sparkling: 'bg-info text-dark', Fortified: 'bg-secondary', Orange: 'bg-orange text-dark' }[color] ?? 'bg-secondary'
 }
 
 onMounted(() => loadWines(1))
 </script>
-
-<style scoped>
-.sortable {
-  cursor: pointer;
-  user-select: none;
-  white-space: nowrap;
-}
-.sortable:hover {
-  background-color: rgba(255,255,255,.08);
-}
-</style>

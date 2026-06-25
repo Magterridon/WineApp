@@ -120,6 +120,54 @@ namespace WineApp.Api.Migrations
                     b.ToTable("DrinkRecords");
                 });
 
+            modelBuilder.Entity("WineApp.Api.Models.PairingRule", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ConditionsJson")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("Priority")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("PairingRules");
+                });
+
+            modelBuilder.Entity("WineApp.Api.Models.PairingRuleRecipe", b =>
+                {
+                    b.Property<int>("PairingRuleId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("RecipeId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("PairingRuleId", "RecipeId");
+
+                    b.HasIndex("RecipeId");
+
+                    b.ToTable("PairingRuleRecipes");
+                });
+
             modelBuilder.Entity("WineApp.Api.Models.Recipe", b =>
                 {
                     b.Property<int>("Id")
@@ -397,6 +445,25 @@ namespace WineApp.Api.Migrations
                     b.Navigation("Wine");
                 });
 
+            modelBuilder.Entity("WineApp.Api.Models.PairingRuleRecipe", b =>
+                {
+                    b.HasOne("WineApp.Api.Models.PairingRule", "Rule")
+                        .WithMany("RecipeTargets")
+                        .HasForeignKey("PairingRuleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("WineApp.Api.Models.Recipe", "Recipe")
+                        .WithMany()
+                        .HasForeignKey("RecipeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Recipe");
+
+                    b.Navigation("Rule");
+                });
+
             modelBuilder.Entity("WineApp.Api.Models.RecipeWinePairing", b =>
                 {
                     b.HasOne("WineApp.Api.Models.Recipe", "Recipe")
@@ -430,6 +497,11 @@ namespace WineApp.Api.Migrations
             modelBuilder.Entity("WineApp.Api.Models.Cellar", b =>
                 {
                     b.Navigation("Items");
+                });
+
+            modelBuilder.Entity("WineApp.Api.Models.PairingRule", b =>
+                {
+                    b.Navigation("RecipeTargets");
                 });
 
             modelBuilder.Entity("WineApp.Api.Models.Recipe", b =>

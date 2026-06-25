@@ -1,139 +1,172 @@
 <template>
   <div>
     <LoadingSpinner v-if="loading" />
-
     <AlertMessage :message="error" @dismiss="error = ''" />
 
     <template v-if="recipe">
-      <div v-if="!editing">
-        <div class="d-flex justify-content-between align-items-start mb-3">
+      <!-- View mode -->
+      <div v-if="!editing" class="space-y-8">
+
+        <!-- Header -->
+        <div class="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <nav aria-label="breadcrumb">
-              <ol class="breadcrumb mb-1">
-                <li class="breadcrumb-item"><router-link to="/recipes">Recipes</router-link></li>
-                <li class="breadcrumb-item active">{{ recipe.name }}</li>
-              </ol>
+            <nav class="text-xs text-base-content/40 mb-2 flex items-center gap-1.5">
+              <router-link to="/recipes" class="hover:text-primary transition-colors">Meals</router-link>
+              <span>›</span>
+              <span class="text-base-content/60">{{ recipe.name }}</span>
             </nav>
-            <h2 class="fw-bold mb-0">{{ recipe.name }}</h2>
-            <span class="badge text-white mt-1" style="background-color: #4a1020;">{{ recipe.recipeType }}</span>
+            <div class="mb-2">
+              <span class="badge-pill bg-primary/10 text-primary border border-primary/20">{{ recipe.recipeType }}</span>
+            </div>
+            <h1 class="font-heading text-3xl font-bold text-base-content leading-tight">{{ recipe.name }}</h1>
           </div>
-          <div v-if="authStore.isAdmin" class="d-flex gap-2 mt-2">
-            <button class="btn btn-outline-secondary btn-sm" @click="editing = true">Edit</button>
-            <button class="btn btn-outline-danger btn-sm" @click="confirmDelete">Delete</button>
+          <div v-if="authStore.isAdmin" class="flex gap-2 mt-1">
+            <button class="btn btn-ghost btn-sm border border-base-200" @click="editing = true">Edit</button>
+            <button class="btn btn-ghost btn-sm text-error" @click="confirmDelete">Delete</button>
           </div>
         </div>
 
-        <div class="row g-4">
-          <div class="col-md-4">
-            <img
-              :src="recipe.imageUrl || 'https://placehold.co/400x300/5D4037/white?text=Recipe'"
-              class="img-fluid rounded shadow-sm mb-3"
-              :alt="recipe.name"
-            />
-            <p v-if="recipe.description" class="text-muted">{{ recipe.description }}</p>
+        <!-- Decorative rule -->
+        <div class="wine-rule"></div>
+
+        <!-- Content grid -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+
+          <!-- Left: image + description -->
+          <div class="space-y-4">
+            <div class="rounded-2xl overflow-hidden shadow-sm bg-base-200" style="aspect-ratio:1/1">
+              <img
+                :src="recipe.imageUrl || 'https://placehold.co/400x400/5D4037/faf8f5?text=🍽️'"
+                :alt="recipe.name"
+                class="w-full h-full object-cover"
+              />
+            </div>
+            <p v-if="recipe.description" class="text-base-content/55 text-sm leading-relaxed">
+              {{ recipe.description }}
+            </p>
           </div>
 
-          <div class="col-md-8">
-            <div class="mb-4">
-              <h5 class="fw-bold">Ingredients</h5>
-              <ul class="list-group list-group-flush">
-                <li v-for="(ingredient, i) in recipe.ingredients" :key="i" class="list-group-item ps-0">
-                  {{ ingredient }}
+          <!-- Right: ingredients + instructions + pairings -->
+          <div class="md:col-span-2 space-y-7">
+
+            <!-- Ingredients -->
+            <div>
+              <h2 class="section-title mb-4">Ingredients</h2>
+              <ul class="space-y-2">
+                <li
+                  v-for="(ingredient, i) in recipe.ingredients"
+                  :key="i"
+                  class="flex gap-3 text-sm border-b border-base-200 pb-2 last:border-0"
+                >
+                  <span class="text-primary font-bold mt-0.5 flex-shrink-0">·</span>
+                  <span class="text-base-content/75">{{ ingredient }}</span>
                 </li>
               </ul>
             </div>
 
-            <div class="mb-4">
-              <h5 class="fw-bold">Instructions</h5>
-              <div class="text-muted" style="white-space: pre-line;">{{ recipe.instructions }}</div>
+            <!-- Instructions -->
+            <div>
+              <h2 class="section-title mb-4">Instructions</h2>
+              <div class="text-base-content/65 text-sm leading-relaxed whitespace-pre-line">{{ recipe.instructions }}</div>
             </div>
 
-            <div v-if="recipe.pairings?.length">
-              <h5 class="fw-bold">Wine Pairings</h5>
-              <div class="row g-2">
-                <div v-for="pairing in recipe.pairings" :key="pairing.wineId" class="col-md-6">
-                  <div v-if="pairing.wine" class="card border-0 shadow-sm h-100">
-                    <div class="card-body py-2">
-                      <router-link
-                        :to="`/wines/${pairing.wineId}`"
-                        class="text-decoration-none text-dark fw-semibold"
-                      >🍷 {{ pairing.wine.name }} {{ pairing.wine.year }}</router-link>
-                      <p v-if="pairing.notes" class="small text-muted mb-0 mt-1 fst-italic">{{ pairing.notes }}</p>
+            <!-- Wine pairings -->
+            <div v-if="recipe.pairings?.length || ruleMatchedWines.length">
+              <h2 class="section-title mb-4">Wine Pairings</h2>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div
+                  v-for="pairing in recipe.pairings"
+                  :key="pairing.wineId"
+                >
+                  <div v-if="pairing.wine" class="flex items-start gap-3 bg-base-100 rounded-xl border border-base-200 p-3 shadow-sm">
+                    <span class="text-primary mt-0.5 text-base flex-shrink-0">🍷</span>
+                    <div>
+                      <router-link :to="`/wines/${pairing.wineId}`" class="font-semibold text-sm hover:text-primary transition-colors">
+                        {{ pairing.wine.name }} {{ pairing.wine.year }}
+                      </router-link>
+                      <p v-if="pairing.notes" class="text-xs text-base-content/45 mt-0.5 italic">{{ pairing.notes }}</p>
+                    </div>
+                  </div>
+                </div>
+                <div v-for="wine in ruleMatchedWines" :key="`rule-${wine.wineId}`">
+                  <div class="flex items-start gap-3 bg-base-100 rounded-xl border border-base-200 p-3 shadow-sm">
+                    <span class="text-base-content/30 mt-0.5 text-base flex-shrink-0">🍷</span>
+                    <div>
+                      <router-link :to="`/wines/${wine.wineId}`" class="font-semibold text-sm hover:text-primary transition-colors">
+                        {{ wine.wineName }} {{ wine.wineYear }}
+                      </router-link>
+                      <p class="text-xs text-base-content/35 mt-0.5">via rule: {{ wine.ruleName }}</p>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
-            <p v-else class="text-muted">No wine pairings defined.</p>
+            <div v-else>
+              <h2 class="section-title mb-3">Wine Pairings</h2>
+              <p class="text-base-content/40 text-sm italic">No wine pairings defined for this recipe.</p>
+            </div>
           </div>
         </div>
       </div>
 
-      <div v-else-if="authStore.isAdmin">
-        <div class="d-flex align-items-center mb-3">
-          <button class="btn btn-link p-0 me-2" @click="editing = false">← Back</button>
-          <h4 class="fw-bold mb-0">Edit Recipe</h4>
+      <!-- Edit mode -->
+      <div v-else-if="authStore.isAdmin" class="space-y-5">
+        <div class="flex items-center gap-3">
+          <button class="btn btn-ghost btn-sm" @click="editing = false">← Back</button>
+          <h2 class="section-title">Edit Meal</h2>
         </div>
-        <RecipeForm
-          :initial-data="recipe"
-          @submit="handleUpdate"
-          @cancel="editing = false"
-        />
+        <RecipeForm :initial-data="recipe" @submit="handleUpdate" @cancel="editing = false" />
       </div>
     </template>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted }      from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { recipeService } from '@/services/recipeService'
-import { useRecipesStore } from '@/stores/recipes'
-import { useAuthStore } from '@/stores/auth'
-import RecipeForm from '@/components/RecipeForm.vue'
+import { recipeService }       from '@/services/recipeService'
+import { pairingRuleService }  from '@/services/pairingRuleService'
+import { useRecipesStore }     from '@/stores/recipes'
+import { useAuthStore }        from '@/stores/auth'
+import RecipeForm     from '@/components/RecipeForm.vue'
 import LoadingSpinner from '@/components/LoadingSpinner.vue'
-import AlertMessage from '@/components/AlertMessage.vue'
+import AlertMessage   from '@/components/AlertMessage.vue'
 
-const route = useRoute()
-const router = useRouter()
+const route        = useRoute()
+const router       = useRouter()
 const recipesStore = useRecipesStore()
-const authStore = useAuthStore()
+const authStore    = useAuthStore()
 
-const recipe = ref(null)
-const loading = ref(true)
-const error = ref('')
-const editing = ref(false)
+const recipe           = ref(null)
+const ruleMatchedWines = ref([])
+const loading          = ref(true)
+const error            = ref('')
+const editing          = ref(false)
 
 async function load() {
-  loading.value = true
-  error.value = ''
+  loading.value = true; error.value = ''
   try {
-    recipe.value = await recipeService.getById(Number(route.params.id))
-  } catch (err) {
-    error.value = err.message
-  } finally {
-    loading.value = false
-  }
+    const id = Number(route.params.id)
+    const [recipeData, ruleWines] = await Promise.all([
+      recipeService.getById(id),
+      pairingRuleService.getWinesForRecipe(id),
+    ])
+    recipe.value = recipeData
+    const directWineIds = new Set(recipeData.pairings?.map(p => p.wineId) ?? [])
+    ruleMatchedWines.value = ruleWines.filter(w => !directWineIds.has(w.wineId))
+  } catch (err) { error.value = err.message }
+  finally { loading.value = false }
 }
 
 async function handleUpdate(data) {
-  try {
-    recipe.value = await recipesStore.updateRecipe(recipe.value.id, data)
-    editing.value = false
-  } catch (err) {
-    error.value = err.message
-    throw err
-  }
+  try { recipe.value = await recipesStore.updateRecipe(recipe.value.id, data); editing.value = false }
+  catch (err) { error.value = err.message; throw err }
 }
 
 async function confirmDelete() {
   if (!confirm(`Delete "${recipe.value.name}"?`)) return
-  try {
-    await recipesStore.deleteRecipe(recipe.value.id)
-    router.push('/recipes')
-  } catch (err) {
-    error.value = err.message
-  }
+  try { await recipesStore.deleteRecipe(recipe.value.id); router.push('/recipes') }
+  catch (err) { error.value = err.message }
 }
 
 onMounted(load)

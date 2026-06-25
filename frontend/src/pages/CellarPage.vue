@@ -1,115 +1,98 @@
 <template>
-  <div>
-    <!-- Header -->
-    <div class="d-flex justify-content-between align-items-center mb-3">
-      <h2 class="fw-bold mb-0">My Cellar</h2>
-      <span class="badge bg-secondary fs-6">
+  <div class="space-y-6">
+
+    <PageHeader eyebrow="My Collection" title="My Cellar">
+      <span v-if="cellarStore.items.length > 0" class="text-sm text-base-content/40 font-medium self-end pb-0.5">
         {{ cellarStore.items.length }} wine{{ cellarStore.items.length !== 1 ? 's' : '' }}
       </span>
-    </div>
+    </PageHeader>
 
     <AlertMessage :message="cellarStore.error" @dismiss="cellarStore.error = null" />
     <LoadingSpinner v-if="cellarStore.loading" />
 
     <template v-else>
-      <!-- ── Summary panels — clickable status filters ──────────────────── -->
-      <div v-if="cellarStore.items.length > 0" class="row g-3 mb-4">
-        <div class="col-6 col-sm-3">
-          <div
-            :class="['card text-center border-0 bg-light h-100 panel-card', { 'is-active': activeStatus === '' }]"
-            @click="activeStatus = ''"
-            title="Show all wines"
-          >
-            <div class="card-body py-2">
-              <div class="fw-bold fs-4">{{ stats.totalBottles }}</div>
-              <div class="text-muted small">Total bottles</div>
-            </div>
-          </div>
+
+      <!-- Summary tiles -->
+      <div v-if="cellarStore.items.length > 0" class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div
+          class="stat-tile"
+          :class="activeStatus === '' ? 'bg-primary/8 ring-1 ring-primary/25' : 'bg-base-100 shadow-sm hover:-translate-y-0.5'"
+          @click="activeStatus = ''"
+        >
+          <div class="stat-tile-value text-base-content">{{ stats.totalBottles }}</div>
+          <div class="stat-tile-label">Total bottles</div>
         </div>
-        <div class="col-6 col-sm-3">
-          <div
-            :class="['card text-center border-0 h-100 panel-card', { 'is-active': activeStatus === 'ready' }]"
-            style="background:#d1e7dd"
-            @click="setStatus('ready')"
-            title="Filter: Ready to drink"
-          >
-            <div class="card-body py-2">
-              <div class="fw-bold fs-4 text-success">{{ stats.ready }}</div>
-              <div class="text-muted small">Ready to drink</div>
-            </div>
-          </div>
+        <div
+          class="stat-tile"
+          :class="activeStatus === 'ready' ? 'bg-success/10 ring-1 ring-success/30' : 'bg-base-100 shadow-sm hover:-translate-y-0.5'"
+          @click="setStatus('ready')"
+        >
+          <div class="stat-tile-value text-success">{{ stats.ready }}</div>
+          <div class="stat-tile-label">Ready to drink</div>
         </div>
-        <div class="col-6 col-sm-3">
-          <div
-            :class="['card text-center border-0 h-100 panel-card', { 'is-active': activeStatus === 'soon' }]"
-            style="background:#fff3cd"
-            @click="setStatus('soon')"
-            title="Filter: Drink Soon"
-          >
-            <div class="card-body py-2">
-              <div class="fw-bold fs-4 text-warning">{{ stats.soon }}</div>
-              <div class="text-muted small">Drink soon</div>
-            </div>
-          </div>
+        <div
+          class="stat-tile"
+          :class="activeStatus === 'soon' ? 'bg-warning/10 ring-1 ring-warning/30' : 'bg-base-100 shadow-sm hover:-translate-y-0.5'"
+          @click="setStatus('soon')"
+        >
+          <div class="stat-tile-value text-warning">{{ stats.soon }}</div>
+          <div class="stat-tile-label">Drink soon</div>
         </div>
-        <div class="col-6 col-sm-3">
-          <div
-            :class="['card text-center border-0 h-100 panel-card', { 'is-active': activeStatus === 'past' }]"
-            style="background:#f8d7da"
-            @click="setStatus('past')"
-            title="Filter: Past Peak"
-          >
-            <div class="card-body py-2">
-              <div class="fw-bold fs-4 text-danger">{{ stats.past }}</div>
-              <div class="text-muted small">Past peak</div>
-            </div>
-          </div>
+        <div
+          class="stat-tile"
+          :class="activeStatus === 'past' ? 'bg-error/10 ring-1 ring-error/30' : 'bg-base-100 shadow-sm hover:-translate-y-0.5'"
+          @click="setStatus('past')"
+        >
+          <div class="stat-tile-value text-error">{{ stats.past }}</div>
+          <div class="stat-tile-label">Past peak</div>
         </div>
       </div>
 
-      <!-- ── Filter panel ────────────────────────────────────────────────── -->
-      <div class="card border-0 bg-light mb-3">
-        <div class="card-body py-2 px-3">
+      <!-- Filters -->
+      <div class="filter-panel">
+        <!-- Mobile toggle header -->
+        <button
+          class="md:hidden w-full flex items-center justify-between text-sm font-semibold text-base-content/70"
+          @click="filtersOpen = !filtersOpen"
+        >
+          <span class="flex items-center gap-2">
+            Filters
+            <span
+              v-if="activeFilterCount > 0"
+              class="inline-flex items-center justify-center h-4 min-w-[1rem] px-1 text-[9px] font-bold bg-primary/15 text-primary rounded-full"
+            >{{ activeFilterCount }}</span>
+          </span>
+          <svg
+            class="w-4 h-4 text-base-content/30 transition-transform duration-150 shrink-0"
+            :class="filtersOpen ? 'rotate-180' : ''"
+            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M6 9l6 6 6-6"/>
+          </svg>
+        </button>
 
-          <!-- Row 1: Name / Domain / Appellation -->
-          <div class="row g-2 mb-2">
-            <div class="col-12 col-sm-4">
-              <label class="form-label small mb-1">Name</label>
-              <input v-model="f.name" type="text" class="form-control form-control-sm" placeholder="Wine name" />
-            </div>
-            <div class="col-12 col-sm-4">
-              <label class="form-label small mb-1">Domain</label>
-              <input v-model="f.domain" type="text" class="form-control form-control-sm" placeholder="Producer / domain" />
-            </div>
-            <div class="col-12 col-sm-4">
-              <label class="form-label small mb-1">Appellation</label>
-              <input v-model="f.appellation" type="text" class="form-control form-control-sm" placeholder="e.g. Pauillac" />
-            </div>
+        <!-- Filter fields: always visible md+, toggle on mobile -->
+        <div :class="['space-y-3', filtersOpen ? 'mt-3' : 'hidden md:block']">
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <input v-model="f.name" type="text" class="input input-bordered input-sm w-full" placeholder="Name…" />
+            <input v-model="f.domain" type="text" class="input input-bordered input-sm w-full" placeholder="Domain…" />
+            <input v-model="f.appellation" type="text" class="input input-bordered input-sm w-full" placeholder="Appellation…" />
           </div>
 
-          <!-- Row 2: Cépage -->
-          <div class="mb-2">
-            <label class="form-label small mb-1">Cépage</label>
+          <div>
+            <label class="label-caps mb-1.5 block">Cépage</label>
             <CepageSelect v-model="f.cepages" />
           </div>
 
-          <!-- Row 3: Color multi-select -->
-          <div class="mb-2">
-            <label class="form-label small mb-1">Color</label>
+          <div>
+            <label class="label-caps mb-1.5 block">Color</label>
             <WineColorPicker v-model="f.colors" />
           </div>
 
-          <!-- Row 4: Vintage / Rank / Status / Drink window -->
-          <div class="d-flex flex-wrap gap-2 align-items-center">
-            <input
-              v-model="f.year"
-              type="number"
-              class="form-control form-control-sm"
-              placeholder="Vintage"
-              style="width:90px"
-              min="1900" max="2100"
-            />
-            <select v-model="f.rank" class="form-select form-select-sm" style="width:105px">
+          <div class="flex flex-wrap gap-2 items-center">
+            <input v-model="f.year" type="number" class="input input-bordered input-sm w-24" placeholder="Vintage" min="1900" max="2100" />
+            <select v-model="f.rank" class="select select-bordered select-sm">
               <option value="">All ranks</option>
               <option value="5">★★★★★</option>
               <option value="4">★★★★</option>
@@ -117,12 +100,11 @@
               <option value="2">★★</option>
               <option value="1">★</option>
             </select>
-            <div class="form-check mb-0">
-              <input class="form-check-input" type="checkbox" id="thisYearCheck" v-model="f.thisYear" />
-              <label class="form-check-label small" for="thisYearCheck">Drink window: this year</label>
-            </div>
-            <!-- Status dropdown (also controllable from summary panels above) -->
-            <select v-model="activeStatus" class="form-select form-select-sm ms-auto" style="width:135px">
+            <label class="flex items-center gap-2 text-sm cursor-pointer">
+              <input v-model="f.thisYear" type="checkbox" class="checkbox checkbox-sm checkbox-primary" />
+              This year's window
+            </label>
+            <select v-model="activeStatus" class="select select-bordered select-sm ml-auto">
               <option value="">All statuses</option>
               <option value="young">Too Young</option>
               <option value="ready">Ready</option>
@@ -131,114 +113,200 @@
             </select>
           </div>
 
-          <!-- Active-filter clear -->
-          <div v-if="hasActiveFilters" class="mt-2">
-            <button class="btn btn-sm btn-link p-0 text-secondary" style="font-size:.8rem" @click="clearFilters">
-              ✕ Clear all filters
-            </button>
+          <div v-if="hasActiveFilters">
+            <button class="btn btn-xs btn-ghost" @click="clearFilters">✕ Clear filters</button>
           </div>
         </div>
       </div>
 
-      <!-- ── Wine table ──────────────────────────────────────────────────── -->
-      <div v-if="filteredItems.length === 0" class="text-center py-4 text-muted">
-        <div style="font-size:3rem">🍾</div>
-        <p class="mt-2 fs-5">
-          {{ cellarStore.items.length === 0 ? 'Your cellar is empty.' : 'No results for your filters.' }}
-        </p>
-        <p v-if="cellarStore.items.length === 0">
-          <router-link to="/wines" class="btn btn-sm text-white" style="background-color:#4a1020">Browse Wines</router-link>
-        </p>
-      </div>
+      <!-- Empty state -->
+      <EmptyState
+        v-if="filteredItems.length === 0"
+        icon="🍾"
+        :title="cellarStore.items.length === 0 ? 'Your cellar is empty' : 'No results match your filters'"
+        :body="cellarStore.items.length === 0
+          ? 'Browse the wine catalog and add bottles you own.'
+          : 'Try clearing your filters to see all cellar wines.'"
+      >
+        <router-link v-if="cellarStore.items.length === 0" to="/wines" class="btn btn-primary btn-sm mt-5">
+          Browse Wines
+        </router-link>
+      </EmptyState>
 
-      <div v-else class="table-responsive">
-        <table class="table table-hover align-middle">
-          <thead class="table-light">
-            <tr>
-              <th class="sortable" @click="setSort('name')">
-                Wine <SortIcon :active="sort.by === 'name'" :dir="sort.dir" />
-              </th>
-              <th class="sortable" @click="setSort('domain')">
-                Domain <SortIcon :active="sort.by === 'domain'" :dir="sort.dir" />
-              </th>
-              <th class="sortable" @click="setSort('year')">
-                Year <SortIcon :active="sort.by === 'year'" :dir="sort.dir" />
-              </th>
-              <th class="sortable" @click="setSort('rank')">
-                Rank <SortIcon :active="sort.by === 'rank'" :dir="sort.dir" />
-              </th>
-              <th>Status</th>
-              <th>Drink Window</th>
-              <th class="text-center sortable" @click="setSort('bottles')">
-                Bottles <SortIcon :active="sort.by === 'bottles'" :dir="sort.dir" />
-              </th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="item in filteredItems" :key="item.wineId" data-testid="cellar-item">
-              <td class="fw-semibold">
-                <router-link :to="`/wines/${item.wineId}`" class="text-decoration-none text-dark">
-                  {{ item.wine.name }}
-                </router-link>
-                <div v-if="item.wine.color" class="mt-1">
-                  <span class="badge" :style="colorBadgeStyle(item.wine.color)" style="font-size:.65rem">{{ item.wine.color }}</span>
+      <template v-else>
+
+        <!-- Sort + count bar (mobile only) -->
+        <div class="md:hidden flex items-center justify-between gap-2">
+          <span class="text-xs text-base-content/40 font-medium">
+            {{ filteredItems.length }} wine{{ filteredItems.length !== 1 ? 's' : '' }}
+          </span>
+          <div class="flex items-center gap-1.5">
+            <span class="text-xs text-base-content/40">Sort:</span>
+            <select v-model="sort.by" class="select select-bordered select-xs" @change="sort.dir = 'asc'">
+              <option value="name">Name</option>
+              <option value="domain">Domain</option>
+              <option value="year">Vintage</option>
+              <option value="bottles">Bottles</option>
+            </select>
+            <button
+              class="w-7 h-7 rounded-lg border border-base-200 text-xs text-base-content/50 hover:text-primary hover:border-primary/30 transition-colors flex items-center justify-center"
+              @click="sort.dir = sort.dir === 'asc' ? 'desc' : 'asc'"
+            >{{ sort.dir === 'asc' ? '↑' : '↓' }}</button>
+          </div>
+        </div>
+
+        <!-- Mobile: card list -->
+        <div class="md:hidden space-y-3">
+          <div
+            v-for="item in filteredItems"
+            :key="item.wineId"
+            class="bg-base-100 rounded-2xl border border-base-200 overflow-hidden shadow-sm flex"
+            data-testid="cellar-item"
+          >
+            <!-- Color accent bar -->
+            <div
+              class="w-1.5 shrink-0"
+              :style="{ backgroundColor: getWineAccentColor(item.wine.color) }"
+              aria-hidden="true"
+            ></div>
+
+            <!-- Card body -->
+            <div class="flex-1 p-4 min-w-0">
+              <!-- Name + details link -->
+              <div class="flex items-start gap-2">
+                <div class="flex-1 min-w-0">
+                  <div class="font-semibold text-base-content leading-snug line-clamp-2">{{ item.wine.name }}</div>
+                  <div class="text-xs text-base-content/45 mt-0.5 flex items-center gap-1.5">
+                    <span class="truncate">{{ item.wine.domain }}</span>
+                    <span v-if="item.wine.year" class="text-base-content/25">·</span>
+                    <span v-if="item.wine.year" class="shrink-0">{{ item.wine.year }}</span>
+                  </div>
                 </div>
-              </td>
-              <td class="text-muted small">{{ item.wine.domain }}</td>
-              <td>{{ item.wine.year }}</td>
-              <td class="text-warning small">{{ stars(item.wine.rank) }}</td>
-              <td>
-                <span v-if="getStatus(item.wine)" class="badge" :class="`bg-${getStatus(item.wine).bg}`">
-                  {{ getStatus(item.wine).label }}
-                </span>
-                <span v-else class="text-muted small">—</span>
-              </td>
-              <td class="small text-muted">
-                <template v-if="item.wine.drinkFromYear || item.wine.drinkToYear">
-                  {{ item.wine.drinkFromYear || '?' }} – {{ item.wine.drinkToYear || '?' }}
-                </template>
-                <span v-else>—</span>
-              </td>
-              <td class="text-center">
-                <div class="d-flex align-items-center justify-content-center gap-1">
+                <router-link
+                  :to="`/wines/${item.wineId}`"
+                  class="shrink-0 p-1 -mr-1 -mt-0.5 text-base-content/20 hover:text-primary transition-colors"
+                  aria-label="View wine details"
+                >
+                  <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M9 18l6-6-6-6"/>
+                  </svg>
+                </router-link>
+              </div>
+
+              <!-- Badges row -->
+              <div class="flex items-center flex-wrap gap-1.5 mt-2.5">
+                <WineColorBadge v-if="item.wine.color" :color="item.wine.color" />
+                <DrinkStatusBadge v-if="getStatus(item.wine)" :status="getStatus(item.wine)" />
+                <StarRating v-if="item.wine.rank" :rank="item.wine.rank" class="ml-auto" />
+              </div>
+
+              <!-- Controls row -->
+              <div class="border-t border-base-200/60 mt-3 pt-3 flex items-center justify-between gap-2">
+                <div class="flex items-center gap-2">
                   <button
-                    class="btn btn-outline-secondary btn-sm"
-                    style="width:30px;height:30px;padding:0"
+                    class="w-9 h-9 rounded-xl border border-base-300 text-base-content/60 hover:border-primary/40 hover:text-primary active:scale-95 transition-all flex items-center justify-center font-semibold text-base"
                     @click="cellarStore.decrement(item.wineId)"
                     data-testid="decrement-btn"
-                    title="Remove one bottle"
+                    aria-label="Remove one bottle"
                   >−</button>
-                  <span class="fw-bold mx-1" style="min-width:24px;text-align:center" data-testid="bottle-count">
-                    {{ item.bottleCount }}
-                  </span>
+                  <span class="font-bold text-sm tabular-nums text-base-content min-w-[1.25rem] text-center" data-testid="bottle-count">{{ item.bottleCount }}</span>
                   <button
-                    class="btn btn-outline-secondary btn-sm"
-                    style="width:30px;height:30px;padding:0"
+                    class="w-9 h-9 rounded-xl border border-base-300 text-base-content/60 hover:border-primary/40 hover:text-primary active:scale-95 transition-all flex items-center justify-center font-semibold text-base"
                     @click="cellarStore.increment(item.wineId)"
                     data-testid="increment-btn"
-                    title="Add one bottle"
+                    aria-label="Add one bottle"
                   >+</button>
+                  <span class="text-xs text-base-content/30">btl{{ item.bottleCount !== 1 ? 's' : '' }}</span>
                 </div>
-              </td>
-              <td>
-                <div class="d-flex gap-1">
-                  <button
-                    class="btn btn-sm text-white"
-                    style="background-color:#722f37"
-                    data-testid="drink-btn"
-                    @click="openDrinkModal(item)"
-                  >Drink</button>
-                  <router-link :to="`/wines/${item.wineId}`" class="btn btn-outline-secondary btn-sm">Details</router-link>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+                <button
+                  class="btn btn-sm btn-secondary"
+                  @click="openDrinkModal(item)"
+                  data-testid="drink-btn"
+                >Drink</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Desktop: table -->
+        <div class="hidden md:block rounded-2xl border border-base-200 overflow-hidden bg-base-100 shadow-sm">
+          <div class="overflow-x-auto">
+            <table class="table table-sm table-head-light w-full">
+              <thead>
+                <tr>
+                  <th class="cursor-pointer select-none" @click="setSort('name')">
+                    Wine <span class="text-[10px]">{{ sortIcon('name') }}</span>
+                  </th>
+                  <th class="cursor-pointer select-none hidden sm:table-cell" @click="setSort('domain')">
+                    Domain <span class="text-[10px]">{{ sortIcon('domain') }}</span>
+                  </th>
+                  <th class="cursor-pointer select-none" @click="setSort('year')">
+                    Year <span class="text-[10px]">{{ sortIcon('year') }}</span>
+                  </th>
+                  <th class="hidden md:table-cell">Status</th>
+                  <th class="hidden lg:table-cell">Window</th>
+                  <th class="cursor-pointer select-none text-center" @click="setSort('bottles')">
+                    Bottles <span class="text-[10px]">{{ sortIcon('bottles') }}</span>
+                  </th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr
+                  v-for="item in filteredItems"
+                  :key="item.wineId"
+                  class="border-b border-base-200 last:border-0 hover:bg-base-200/40 transition-colors"
+                  data-testid="cellar-item"
+                >
+                  <td class="font-medium">
+                    <router-link :to="`/wines/${item.wineId}`" class="hover:text-primary transition-colors">
+                      {{ item.wine.name }}
+                    </router-link>
+                    <WineColorBadge v-if="item.wine.color" :color="item.wine.color" class="ml-2" />
+                  </td>
+                  <td class="text-base-content/50 text-sm hidden sm:table-cell">{{ item.wine.domain }}</td>
+                  <td class="text-sm">{{ item.wine.year }}</td>
+                  <td class="hidden md:table-cell">
+                    <DrinkStatusBadge v-if="getStatus(item.wine)" :status="getStatus(item.wine)" />
+                    <span v-else class="text-base-content/25 text-xs">—</span>
+                  </td>
+                  <td class="text-xs text-base-content/40 hidden lg:table-cell whitespace-nowrap">
+                    <template v-if="item.wine.drinkFromYear || item.wine.drinkToYear">
+                      {{ item.wine.drinkFromYear || '?' }} – {{ item.wine.drinkToYear || '?' }}
+                    </template>
+                    <span v-else>—</span>
+                  </td>
+                  <td class="text-center">
+                    <div class="flex items-center justify-center gap-1.5">
+                      <button
+                        class="w-7 h-7 rounded-lg border border-base-300 text-base-content/60 hover:border-primary/40 hover:text-primary transition-colors flex items-center justify-center text-sm"
+                        @click="cellarStore.decrement(item.wineId)"
+                        data-testid="decrement-btn"
+                      >−</button>
+                      <span class="font-bold w-6 text-center text-sm tabular-nums" data-testid="bottle-count">{{ item.bottleCount }}</span>
+                      <button
+                        class="w-7 h-7 rounded-lg border border-base-300 text-base-content/60 hover:border-primary/40 hover:text-primary transition-colors flex items-center justify-center text-sm"
+                        @click="cellarStore.increment(item.wineId)"
+                        data-testid="increment-btn"
+                      >+</button>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="flex gap-1.5">
+                      <button class="btn btn-xs btn-secondary" @click="openDrinkModal(item)" data-testid="drink-btn">Drink</button>
+                      <router-link :to="`/wines/${item.wineId}`" class="btn btn-xs btn-ghost border border-base-200">Details</router-link>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </template>
+
     </template>
 
-    <!-- Drink modal -->
     <DrinkModal
       :show="!!drinkTarget"
       :wine-id="drinkTarget?.wineId"
@@ -247,205 +315,200 @@
       @cancel="drinkTarget = null"
     />
 
-    <!-- ── Tasting history ─────────────────────────────────────────────── -->
-    <div class="mt-5">
-      <div class="d-flex align-items-center gap-3 mb-3 flex-wrap">
-        <h4 class="fw-bold mb-0">Tasting History</h4>
-        <div style="min-width:200px;max-width:320px" class="flex-grow-1">
-          <input
-            v-model="historySearch"
-            type="text"
-            class="form-control form-control-sm"
-            placeholder="Search: wine, meal, recipe…"
-          />
-        </div>
+    <!-- Tasting History -->
+    <div class="mt-4 space-y-4">
+      <div class="wine-rule"></div>
+
+      <div class="flex items-center gap-4 flex-wrap">
+        <h2 class="section-title">Tasting History</h2>
+        <input
+          v-model="historySearch"
+          type="text"
+          class="input input-bordered input-sm flex-1 max-w-xs"
+          placeholder="Search: wine, meal, recipe…"
+        />
       </div>
 
-      <div v-if="cellarStore.history.length === 0" class="text-center py-4 text-muted">
-        <div style="font-size:2rem">📖</div>
-        <p class="mt-2">No tasting records yet. Drink a bottle to start your history.</p>
+      <div v-if="cellarStore.history.length === 0" class="empty-state py-12">
+        <span class="empty-state-icon">📖</span>
+        <h3 class="empty-state-title">No tasting records yet</h3>
+        <p class="empty-state-body">Start recording tastings when you drink a bottle.</p>
       </div>
 
       <template v-else>
-        <p v-if="filteredHistory.length < cellarStore.history.length" class="text-muted small mb-2">
+        <p v-if="filteredHistory.length < cellarStore.history.length" class="text-xs text-base-content/40">
           Showing {{ filteredHistory.length }} of {{ cellarStore.history.length }} records
         </p>
 
-        <div v-if="filteredHistory.length === 0" class="text-center py-3 text-muted">
-          <p class="mb-1">No tasting records match the current filter.</p>
-          <button class="btn btn-sm btn-link p-0" @click="clearFilters">Clear filters</button>
+        <div v-if="filteredHistory.length === 0" class="text-center py-6 text-base-content/40 text-sm">
+          No records match.
+          <button class="link link-primary ml-1" @click="historySearch = ''">Clear search</button>
         </div>
 
-        <div v-else class="table-responsive">
-          <table class="table table-hover align-middle">
-            <thead class="table-light">
-              <tr>
-                <th>Wine</th>
-                <th>Date</th>
-                <th>Rating ★</th>
-                <th>Tasting note</th>
-                <th>Meal</th>
-                <th>Pairing ★</th>
-                <th>Pairing note</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="record in filteredHistory" :key="record.id" data-testid="history-item">
-                <td class="fw-semibold">
-                  <router-link :to="`/wines/${record.wineId}`" class="text-decoration-none text-dark">
+        <template v-else>
+          <!-- Mobile: history cards -->
+          <div class="md:hidden space-y-2">
+            <div
+              v-for="record in filteredHistory"
+              :key="record.id"
+              class="bg-base-100 rounded-xl border border-base-200 p-3.5 shadow-sm"
+              data-testid="history-item"
+            >
+              <div class="flex items-start justify-between gap-2">
+                <div class="min-w-0">
+                  <router-link :to="`/wines/${record.wineId}`" class="font-semibold text-sm hover:text-primary transition-colors">
                     {{ record.wineName }}
                   </router-link>
-                  <div class="text-muted small">{{ record.wineYear }}</div>
-                </td>
-                <td class="small text-nowrap">{{ formatDate(record.consumedAt) }}</td>
-                <td class="text-warning text-nowrap">{{ record.rating ? '★'.repeat(record.rating) : '—' }}</td>
-                <td class="small text-muted" style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
-                  {{ record.tastingNote || '—' }}
-                </td>
-                <td class="small text-muted" style="max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
-                  {{ record.recipeName || record.mealNote || '—' }}
-                </td>
-                <td class="text-warning text-nowrap">{{ record.pairingRating ? '★'.repeat(record.pairingRating) : '—' }}</td>
-                <td class="small text-muted" style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
-                  {{ record.pairingNote || '—' }}
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+                  <div class="text-xs text-base-content/40 mt-0.5">{{ record.wineYear }}</div>
+                </div>
+                <span class="text-xs text-base-content/40 whitespace-nowrap shrink-0">{{ formatDate(record.consumedAt) }}</span>
+              </div>
+              <div class="flex items-center gap-3 mt-2 flex-wrap">
+                <span v-if="record.rating" class="text-amber-400 text-sm">{{ '★'.repeat(record.rating) }}</span>
+                <span v-else class="text-base-content/30 text-xs">No rating</span>
+                <span v-if="record.recipeName || record.mealNote" class="text-xs text-base-content/45 truncate flex-1">
+                  with {{ record.recipeName || record.mealNote }}
+                </span>
+                <span v-if="record.pairingRating" class="text-amber-400 text-xs ml-auto shrink-0">
+                  Pairing: {{ '★'.repeat(record.pairingRating) }}
+                </span>
+              </div>
+              <p v-if="record.tastingNote" class="text-xs text-base-content/40 mt-1.5 italic line-clamp-2">
+                "{{ record.tastingNote }}"
+              </p>
+            </div>
+          </div>
+
+          <!-- Desktop: history table -->
+          <div class="hidden md:block rounded-2xl border border-base-200 overflow-hidden bg-base-100 shadow-sm">
+            <div class="overflow-x-auto">
+              <table class="table table-sm table-head-light w-full text-sm">
+                <thead>
+                  <tr>
+                    <th>Wine</th>
+                    <th>Date</th>
+                    <th>Rating</th>
+                    <th class="hidden md:table-cell">Note</th>
+                    <th class="hidden sm:table-cell">Meal</th>
+                    <th>Pairing</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr
+                    v-for="record in filteredHistory"
+                    :key="record.id"
+                    class="border-b border-base-200 last:border-0 hover:bg-base-200/40 transition-colors"
+                    data-testid="history-item"
+                  >
+                    <td class="font-medium">
+                      <router-link :to="`/wines/${record.wineId}`" class="hover:text-primary transition-colors">{{ record.wineName }}</router-link>
+                      <div class="text-[10px] text-base-content/40 tabular-nums">{{ record.wineYear }}</div>
+                    </td>
+                    <td class="whitespace-nowrap text-base-content/50 text-xs">{{ formatDate(record.consumedAt) }}</td>
+                    <td class="text-amber-400 whitespace-nowrap text-sm">{{ record.rating ? '★'.repeat(record.rating) : '—' }}</td>
+                    <td class="max-w-[160px] truncate text-base-content/50 hidden md:table-cell text-xs">{{ record.tastingNote || '—' }}</td>
+                    <td class="max-w-[120px] truncate text-base-content/50 hidden sm:table-cell text-xs">{{ record.recipeName || record.mealNote || '—' }}</td>
+                    <td class="text-amber-400 whitespace-nowrap text-sm">{{ record.pairingRating ? '★'.repeat(record.pairingRating) : '—' }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </template>
       </template>
     </div>
+
   </div>
 </template>
 
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useCellarStore } from '@/stores/cellar'
-import DrinkModal      from '@/components/DrinkModal.vue'
-import WineColorPicker from '@/components/WineColorPicker.vue'
-import CepageSelect    from '@/components/CepageSelect.vue'
-import LoadingSpinner  from '@/components/LoadingSpinner.vue'
-import AlertMessage    from '@/components/AlertMessage.vue'
-import { getDrinkStatus, COLOR_STYLES } from '@/utils/drinkStatus'
-
-// ── SortIcon (inline component — no separate file needed) ─────────────────
-const SortIcon = {
-  props: { active: Boolean, dir: String },
-  template: `
-    <span class="sort-icon ms-1" :class="active ? 'text-dark' : 'text-muted opacity-50'" style="font-size:.8em">
-      <template v-if="active">{{ dir === 'asc' ? '↑' : '↓' }}</template>
-      <template v-else>↕</template>
-    </span>
-  `
-}
+import DrinkModal       from '@/components/DrinkModal.vue'
+import WineColorPicker  from '@/components/WineColorPicker.vue'
+import CepageSelect     from '@/components/CepageSelect.vue'
+import LoadingSpinner   from '@/components/LoadingSpinner.vue'
+import AlertMessage     from '@/components/AlertMessage.vue'
+import { getDrinkStatus } from '@/utils/drinkStatus'
+import { COLOR_STYLES }   from '@/utils/wineColor'
+import PageHeader       from '@/components/ui/PageHeader.vue'
+import EmptyState       from '@/components/ui/EmptyState.vue'
+import WineColorBadge   from '@/components/ui/WineColorBadge.vue'
+import DrinkStatusBadge from '@/components/ui/DrinkStatusBadge.vue'
+import StarRating       from '@/components/ui/StarRating.vue'
 
 const cellarStore  = useCellarStore()
 const CURRENT_YEAR = new Date().getFullYear()
 
-// ── Filter state ─────────────────────────────────────────────────────────
-const f = reactive({
-  name:        '',
-  domain:      '',
-  appellation: '',
-  cepages:     [],
-  colors:      [],
-  year:        '',
-  rank:        '',
-  thisYear:    false,
-})
-
+const f = reactive({ name:'', domain:'', appellation:'', cepages:[], colors:[], year:'', rank:'', thisYear: false })
 const activeStatus  = ref('')
 const historySearch = ref('')
 const drinkTarget   = ref(null)
+const sort          = reactive({ by: 'name', dir: 'asc' })
+const filtersOpen   = ref(false)
 
 const STATUS_LABEL = { ready: 'Ready', soon: 'Drink Soon', past: 'Past Peak', young: 'Too Young' }
 
-function setStatus(status) {
-  activeStatus.value = activeStatus.value === status ? '' : status
+function setStatus(s) { activeStatus.value = activeStatus.value === s ? '' : s }
+function setSort(col) {
+  sort.dir = sort.by === col ? (sort.dir === 'asc' ? 'desc' : 'asc') : 'asc'
+  sort.by  = col
+}
+function sortIcon(col) {
+  if (sort.by !== col) return '↕'
+  return sort.dir === 'asc' ? '↑' : '↓'
 }
 
+function getWineAccentColor(color) {
+  return COLOR_STYLES[color]?.bg ?? '#d4c5b2'
+}
+
+const activeFilterCount = computed(() =>
+  [f.name, f.domain, f.appellation].filter(Boolean).length +
+  (f.cepages.length > 0 ? 1 : 0) +
+  (f.colors.length > 0 ? 1 : 0) +
+  (f.year ? 1 : 0) +
+  (f.rank ? 1 : 0) +
+  (f.thisYear ? 1 : 0) +
+  (activeStatus.value ? 1 : 0)
+)
+
 const hasActiveFilters = computed(() =>
-  !!f.name || !!f.domain || !!f.appellation ||
-  f.cepages.length > 0 || f.colors.length > 0 ||
-  !!f.year || !!f.rank || f.thisYear ||
-  !!activeStatus.value || !!historySearch.value.trim()
+  !!f.name || !!f.domain || !!f.appellation || f.cepages.length > 0 || f.colors.length > 0 ||
+  !!f.year || !!f.rank || f.thisYear || !!activeStatus.value || !!historySearch.value.trim()
 )
 
 function clearFilters() {
-  Object.assign(f, { name: '', domain: '', appellation: '', cepages: [], colors: [], year: '', rank: '', thisYear: false })
-  activeStatus.value  = ''
-  historySearch.value = ''
+  Object.assign(f, { name:'', domain:'', appellation:'', cepages:[], colors:[], year:'', rank:'', thisYear: false })
+  activeStatus.value = ''; historySearch.value = ''
 }
 
-// ── Sorting ─────────────────────────────────────────────────────────────
-const sort = reactive({ by: 'name', dir: 'asc' })
-
-function setSort(col) {
-  if (sort.by === col) {
-    sort.dir = sort.dir === 'asc' ? 'desc' : 'asc'
-  } else {
-    sort.by  = col
-    sort.dir = 'asc'
-  }
-}
-
-// ── Cellar wine list (client-side filter + sort) ──────────────────────────
 const filteredItems = computed(() => {
   let items = [...cellarStore.items]
-
-  if (f.name.trim()) {
-    const q = f.name.toLowerCase()
-    items = items.filter(i => i.wine.name.toLowerCase().includes(q))
-  }
-
-  if (f.domain.trim()) {
-    const q = f.domain.toLowerCase()
-    items = items.filter(i => i.wine.domain.toLowerCase().includes(q))
-  }
-
-  if (f.appellation.trim()) {
-    const q = f.appellation.toLowerCase()
-    items = items.filter(i => i.wine.appellation?.toLowerCase().includes(q))
-  }
-
+  if (f.name.trim())        items = items.filter(i => i.wine.name.toLowerCase().includes(f.name.toLowerCase()))
+  if (f.domain.trim())      items = items.filter(i => i.wine.domain.toLowerCase().includes(f.domain.toLowerCase()))
+  if (f.appellation.trim()) items = items.filter(i => i.wine.appellation?.toLowerCase().includes(f.appellation.toLowerCase()))
   if (f.cepages.length > 0) {
     const lc = f.cepages.map(c => c.toLowerCase())
-    items = items.filter(i =>
-      (i.wine.cepages || []).some(c => lc.includes(c.name.toLowerCase()))
-    )
+    items = items.filter(i => (i.wine.cepages || []).some(c => lc.includes(c.name.toLowerCase())))
   }
-
-  if (f.colors.length > 0) {
-    items = items.filter(i => i.wine.color && f.colors.includes(i.wine.color))
-  }
-
-  if (f.year) {
-    items = items.filter(i => String(i.wine.year) === f.year)
-  }
-
-  if (f.rank) {
-    items = items.filter(i => String(i.wine.rank) === f.rank)
-  }
-
+  if (f.colors.length > 0)  items = items.filter(i => i.wine.color && f.colors.includes(i.wine.color))
+  if (f.year)                items = items.filter(i => String(i.wine.year) === f.year)
+  if (f.rank)                items = items.filter(i => String(i.wine.rank) === f.rank)
   if (f.thisYear) {
     items = items.filter(i => {
-      const from = i.wine.drinkFromYear
-      const to   = i.wine.drinkToYear
+      const from = i.wine.drinkFromYear, to = i.wine.drinkToYear
       if (!from && !to) return false
-      if (from && to)   return CURRENT_YEAR >= from && CURRENT_YEAR <= to
-      if (from)         return CURRENT_YEAR >= from
-      return CURRENT_YEAR <= to
+      if (from && to) return CURRENT_YEAR >= from && CURRENT_YEAR <= to
+      return from ? CURRENT_YEAR >= from : CURRENT_YEAR <= to
     })
   }
-
   if (activeStatus.value) {
     items = items.filter(i => {
       const s = getDrinkStatus(i.wine)
       return s?.label === STATUS_LABEL[activeStatus.value]
     })
   }
-
-  // ── Sort ────────────────────────────────────────────────────────────────
   const dir = sort.dir === 'asc' ? 1 : -1
   items.sort((a, b) => {
     switch (sort.by) {
@@ -457,56 +520,41 @@ const filteredItems = computed(() => {
       default:        return 0
     }
   })
-
   return items
 })
 
-// ── Tasting history ───────────────────────────────────────────────────────
 const filteredHistory = computed(() => {
   let records = cellarStore.history
-
   if (activeStatus.value) {
     records = records.filter(r => {
       const s = getDrinkStatus({ drinkFromYear: r.wineDrinkFromYear, drinkToYear: r.wineDrinkToYear })
       return s?.label === STATUS_LABEL[activeStatus.value]
     })
   }
-
   const q = historySearch.value.trim().toLowerCase()
   if (q) {
     records = records.filter(r =>
-      r.wineName.toLowerCase().includes(q) ||
-      r.wineDomain.toLowerCase().includes(q) ||
-      String(r.wineYear).includes(q) ||
-      r.recipeName?.toLowerCase().includes(q) ||
-      r.mealNote?.toLowerCase().includes(q)
+      r.wineName.toLowerCase().includes(q) || r.wineDomain.toLowerCase().includes(q) ||
+      String(r.wineYear).includes(q) || r.recipeName?.toLowerCase().includes(q) || r.mealNote?.toLowerCase().includes(q)
     )
   }
-
   return records
 })
 
-// ── Summary stats ─────────────────────────────────────────────────────────
 const stats = computed(() => {
   const totalBottles = cellarStore.items.reduce((sum, i) => sum + i.bottleCount, 0)
   let ready = 0, soon = 0, past = 0
   for (const item of cellarStore.items) {
     const s = getDrinkStatus(item.wine)
     if (!s) continue
-    if (s.label === 'Ready')     ready++
+    if (s.label === 'Ready')      ready++
     else if (s.label === 'Drink Soon') soon++
     else if (s.label === 'Past Peak')  past++
   }
   return { totalBottles, ready, soon, past }
 })
 
-// ── Helpers ───────────────────────────────────────────────────────────────
-function getStatus(wine)     { return getDrinkStatus(wine) }
-function colorBadgeStyle(color) {
-  const s = COLOR_STYLES[color]
-  return s ? `background-color:${s.bg};color:${s.text}` : 'background-color:#6c757d;color:white'
-}
-function stars(rank) { return '★'.repeat(rank) + '☆'.repeat(5 - rank) }
+function getStatus(wine) { return getDrinkStatus(wine) }
 function formatDate(iso) {
   return new Date(iso).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
 }
@@ -516,30 +564,5 @@ async function confirmDrink(form) {
   drinkTarget.value = null
 }
 
-onMounted(() => {
-  cellarStore.fetchCellar()
-  cellarStore.fetchHistory()
-})
+onMounted(() => { cellarStore.fetchCellar(); cellarStore.fetchHistory() })
 </script>
-
-<style scoped>
-.panel-card {
-  cursor: pointer;
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
-  user-select: none;
-}
-.panel-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0,0,0,.12) !important;
-}
-.panel-card.is-active {
-  transform: translateY(-2px);
-  box-shadow: 0 0 0 2px rgba(0,0,0,.35), 0 4px 12px rgba(0,0,0,.15) !important;
-}
-.sortable {
-  cursor: pointer;
-  user-select: none;
-  white-space: nowrap;
-}
-.sortable:hover { background-color: rgba(0,0,0,.04); }
-</style>

@@ -1,7 +1,5 @@
 <template>
-  <div class="d-flex justify-content-center py-5">
-    <div class="spinner-border" style="color: #4a1020;" role="status">
-      <span class="visually-hidden">Loading...</span>
-    </div>
+  <div class="flex justify-center items-center py-16">
+    <span class="loading loading-spinner loading-md text-primary"></span>
   </div>
 </template>

@@ -1,59 +1,75 @@
 <template>
-  <div class="card h-100 shadow-sm" data-testid="wine-card">
-    <div style="position: relative;">
+  <div
+    class="group flex flex-col bg-base-100 rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5"
+    data-testid="wine-card"
+  >
+    <!-- Portrait image — wine bottle feel -->
+    <figure class="relative overflow-hidden bg-base-200 flex-shrink-0" style="aspect-ratio:2/3">
       <img
-        :src="wine.imageUrl || 'https://placehold.co/300x200/4a1020/white?text=Wine'"
-        class="card-img-top"
+        :src="wine.imageUrl || 'https://placehold.co/400x600/4a1020/faf8f5?text=🍷'"
         :alt="wine.name"
-        style="height: 150px; object-fit: cover;"
+        class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
       />
-      <span
-        v-if="drinkStatus"
-        class="badge position-absolute top-0 end-0 m-2"
-        :class="`bg-${drinkStatus.bg}`"
-        style="font-size: 0.7rem;"
-      >{{ drinkStatus.label }}</span>
-    </div>
-    <div class="card-body d-flex flex-column">
-      <div class="d-flex justify-content-between align-items-start mb-1">
-        <h6 class="card-title mb-0 fw-semibold">{{ wine.name }}</h6>
-        <span
-          v-if="wine.color"
-          class="badge ms-1 flex-shrink-0"
-          :style="colorStyle"
-          style="font-size: 0.65rem;"
-        >{{ wine.color }}</span>
+
+      <!-- Gradient overlay -->
+      <div class="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-black/50 to-transparent pointer-events-none"></div>
+
+      <!-- Drink status — top right -->
+      <div v-if="drinkStatus" class="absolute top-3 right-3">
+        <span class="badge-pill backdrop-blur-md bg-black/40 text-white border border-white/15">
+          {{ drinkStatus.label }}
+        </span>
       </div>
-      <p class="text-muted small mb-1">{{ wine.domain }} · {{ wine.year }}</p>
-      <p class="small mb-1 text-warning">{{ stars(wine.rank) }}</p>
-      <p
-        class="card-text small text-muted mb-2 flex-grow-1"
-        style="overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;"
-      >{{ wine.description }}</p>
-      <p class="small text-muted mb-3 fst-italic">
-        {{ wine.cepages.map(c => c.percentage ? `${c.name} ${c.percentage}%` : c.name).join(', ') }}
+
+      <!-- Color — bottom left -->
+      <div v-if="wine.color" class="absolute bottom-3 left-3">
+        <WineColorBadge :color="wine.color" />
+      </div>
+    </figure>
+
+    <!-- Content -->
+    <div class="flex flex-col flex-1 p-4 gap-2">
+      <div>
+        <h3 class="font-heading font-bold text-[15px] leading-snug line-clamp-1">{{ wine.name }}</h3>
+        <p class="text-xs text-base-content/50 mt-0.5 truncate">{{ wine.domain }} · {{ wine.year }}</p>
+      </div>
+
+      <StarRating :rank="wine.rank" />
+
+      <p class="text-[11px] text-base-content/40 italic line-clamp-1 min-h-[1rem]">
+        {{ wine.cepages?.map(c => c.name).join(', ') || '' }}
       </p>
-      <div class="d-flex gap-2 mt-auto">
-        <router-link :to="`/wines/${wine.id}`" class="btn btn-outline-secondary btn-sm">Details</router-link>
+
+      <p class="text-xs text-base-content/50 line-clamp-2 flex-1 leading-relaxed min-h-[2rem]">
+        {{ wine.description }}
+      </p>
+
+      <!-- Actions -->
+      <div class="pt-3 mt-1 border-t border-base-200 flex gap-2">
+        <router-link :to="`/wines/${wine.id}`" class="btn btn-xs btn-ghost border border-base-300 flex-1">
+          Details
+        </router-link>
+
         <button
           v-if="!inCellar"
-          class="btn btn-sm text-white"
-          style="background-color: #4a1020;"
+          class="btn btn-xs btn-primary flex-1"
           data-testid="add-to-cellar-btn"
           @click="$emit('add-to-cellar', wine.id)"
-        >+ Cellar</button>
+        >
+          + Cellar
+        </button>
+
         <template v-else>
           <button
-            class="btn btn-sm text-white"
-            style="background-color: #722f37;"
+            class="btn btn-xs btn-secondary"
             data-testid="drink-btn"
             @click="$emit('drink', wine.id)"
           >Drink</button>
           <button
-            class="btn btn-outline-danger btn-sm"
+            class="btn btn-xs btn-ghost text-error border border-error/20"
             data-testid="remove-from-cellar-btn"
             @click="$emit('remove-from-cellar', wine.id)"
-          >Remove</button>
+          >✕</button>
         </template>
       </div>
     </div>
@@ -62,21 +78,15 @@
 
 <script setup>
 import { computed } from 'vue'
-import { getDrinkStatus, COLOR_STYLES } from '@/utils/drinkStatus'
+import { getDrinkStatus } from '@/utils/drinkStatus'
+import WineColorBadge from '@/components/ui/WineColorBadge.vue'
+import StarRating     from '@/components/ui/StarRating.vue'
 
 const props = defineProps({
-  wine: { type: Object, required: true },
-  inCellar: { type: Boolean, default: false }
+  wine:     { type: Object,  required: true },
+  inCellar: { type: Boolean, default: false },
 })
 defineEmits(['add-to-cellar', 'remove-from-cellar', 'drink'])
 
 const drinkStatus = computed(() => getDrinkStatus(props.wine))
-const colorStyle = computed(() => {
-  const s = COLOR_STYLES[props.wine.color]
-  return s ? `background-color: ${s.bg}; color: ${s.text};` : ''
-})
-
-function stars(rank) {
-  return '★'.repeat(rank) + '☆'.repeat(5 - rank)
-}
 </script>

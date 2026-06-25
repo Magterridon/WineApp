@@ -1,59 +1,91 @@
 <template>
-  <nav class="navbar navbar-expand-lg navbar-dark" style="background-color: #4a1020;">
-    <div class="container">
-      <router-link class="navbar-brand fw-bold" to="/">🍷 WineCellar</router-link>
+  <header class="sticky top-0 z-40 bg-base-100/90 backdrop-blur border-b border-base-200">
+    <div class="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between gap-4">
 
-      <button class="navbar-toggler" type="button" @click="isOpen = !isOpen" aria-label="Toggle navigation">
-        <span class="navbar-toggler-icon"></span>
-      </button>
+      <!-- Brand -->
+      <router-link
+        to="/"
+        class="flex items-center gap-2 font-heading font-semibold text-lg text-base-content no-underline shrink-0"
+      >
+        <span class="text-xl leading-none" aria-hidden="true">🍷</span>
+        <span class="hidden sm:inline">WineCellar</span>
+      </router-link>
 
-      <div class="navbar-collapse" :class="{ show: isOpen, collapse: !isOpen }">
-        <ul class="navbar-nav ms-auto align-items-lg-center">
-          <template v-if="authStore.isAuthenticated">
-            <li class="nav-item">
-              <router-link class="nav-link" to="/cellar" @click="isOpen = false">My Cellar</router-link>
-            </li>
-            <li class="nav-item">
-              <router-link class="nav-link" to="/wines" @click="isOpen = false">Wines</router-link>
-            </li>
-            <li class="nav-item">
-              <router-link class="nav-link" to="/recipes" @click="isOpen = false">Recipes</router-link>
-            </li>
-            <li v-if="authStore.isAdmin" class="nav-item">
-              <router-link class="nav-link" to="/admin/wines" @click="isOpen = false">
-                <span class="badge bg-danger me-1">Admin</span>Catalog
-              </router-link>
-            </li>
-            <li class="nav-item ms-lg-2">
-              <span class="nav-link text-light opacity-75 small d-none d-lg-block">{{ authStore.user?.email }}</span>
-            </li>
-            <li class="nav-item">
-              <button class="btn btn-outline-light btn-sm ms-lg-2 mt-2 mt-lg-0" @click="logout">Logout</button>
-            </li>
-          </template>
-          <template v-else>
-            <li class="nav-item">
-              <router-link class="nav-link" to="/login" @click="isOpen = false">Login / Register</router-link>
-            </li>
-          </template>
-        </ul>
+      <!-- Desktop nav -->
+      <nav v-if="authStore.isAuthenticated" class="hidden md:flex items-center gap-1" aria-label="Main navigation">
+        <router-link
+          v-for="link in navLinks"
+          :key="link.to"
+          :to="link.to"
+          class="px-3 py-1.5 rounded-lg text-sm font-medium text-base-content/60 hover:text-base-content hover:bg-base-200 transition-colors"
+          active-class="text-primary bg-primary/8 hover:bg-primary/8 hover:text-primary"
+        >{{ link.label }}</router-link>
+
+        <template v-if="authStore.isAdmin">
+          <div class="w-px h-5 bg-base-300 mx-1.5" aria-hidden="true"></div>
+          <router-link
+            to="/admin/wines"
+            class="px-3 py-1.5 rounded-lg text-sm font-medium text-base-content/50 hover:text-base-content hover:bg-base-200 transition-colors inline-flex items-center gap-1.5"
+            active-class="text-primary bg-primary/8 hover:bg-primary/8 hover:text-primary"
+          >
+            <svg class="w-3 h-3 opacity-60 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <rect x="5" y="11" width="14" height="10" rx="2"/>
+              <path d="M8 11V7a4 4 0 018 0v4"/>
+            </svg>
+            Catalog
+          </router-link>
+          <router-link
+            to="/admin/pairing-rules"
+            class="px-3 py-1.5 rounded-lg text-sm font-medium text-base-content/50 hover:text-base-content hover:bg-base-200 transition-colors inline-flex items-center gap-1.5"
+            active-class="text-primary bg-primary/8 hover:bg-primary/8 hover:text-primary"
+          >
+            <svg class="w-3 h-3 opacity-60 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <rect x="5" y="11" width="14" height="10" rx="2"/>
+              <path d="M8 11V7a4 4 0 018 0v4"/>
+            </svg>
+            Pairings
+          </router-link>
+        </template>
+      </nav>
+
+      <!-- Right: user + sign out -->
+      <div class="flex items-center gap-2 shrink-0">
+        <template v-if="authStore.isAuthenticated">
+          <span class="hidden lg:block text-xs text-base-content/35 max-w-[160px] truncate">
+            {{ authStore.user?.email }}
+          </span>
+          <button
+            class="text-sm font-medium text-base-content/50 hover:text-base-content transition-colors px-2 py-1 rounded-lg hover:bg-base-200"
+            @click="logout"
+          >
+            Sign out
+          </button>
+        </template>
+        <template v-else>
+          <router-link to="/login" class="btn btn-sm btn-primary">Sign in</router-link>
+        </template>
       </div>
+
     </div>
-  </nav>
+  </header>
 </template>
 
 <script setup>
-import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 
 const authStore = useAuthStore()
 const router = useRouter()
-const isOpen = ref(false)
+
+const navLinks = [
+  { to: '/cellar',      label: 'My Cellar' },
+  { to: '/wines',       label: 'Wines' },
+  { to: '/recipes',     label: 'Meals' },
+  { to: '/weekly-menu', label: 'Weekly Menu' },
+]
 
 function logout() {
   authStore.logout()
-  isOpen.value = false
   router.push('/login')
 }
 </script>
