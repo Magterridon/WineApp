@@ -1,33 +1,26 @@
 <template>
   <div class="space-y-4">
 
-    <div class="flex items-center justify-between gap-3">
-      <div class="flex items-center gap-3">
-        <h1 class="page-title">Pairing Rules</h1>
-        <span class="label-caps border border-base-300 px-2.5 py-0.5 rounded-full">Admin</span>
-      </div>
+    <PageHeader eyebrow="Admin" title="Pairing Rules">
       <button v-if="!editing" class="btn btn-sm btn-primary" @click="startCreate">+ New Rule</button>
-    </div>
+    </PageHeader>
 
     <AlertMessage v-if="alert" :message="alert.message" :type="alert.type" @dismiss="alert = null" />
 
     <!-- Create / Edit form -->
-    <div v-if="editing" class="bg-base-100 rounded-2xl border border-base-300 overflow-hidden">
-      <div class="px-5 py-3 border-b border-base-300 bg-base-200/50 font-semibold text-sm">
+    <div v-if="editing" class="bg-base-100 rounded-2xl border border-base-200 overflow-hidden">
+      <div class="px-5 py-3 border-b border-base-200 bg-base-200/50 font-semibold text-sm">
         {{ form.id ? 'Edit Rule' : 'New Rule' }}
       </div>
       <div class="p-5 space-y-4">
 
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div class="form-control sm:col-span-2">
-            <label class="label py-1"><span class="label-text font-medium">Rule name <span class="text-error">*</span></span></label>
+          <FormField label="Rule name" required class="sm:col-span-2">
             <input v-model="form.name" type="text" class="input input-bordered input-sm w-full" placeholder="e.g. Red Bordeaux with Red Meat" />
-          </div>
-          <div class="form-control">
-            <label class="label py-1"><span class="label-text font-medium">Priority</span></label>
+          </FormField>
+          <FormField label="Priority" hint="Higher = applied first">
             <input v-model.number="form.priority" type="number" min="1" max="100" class="input input-bordered input-sm w-full" />
-            <label class="label py-0.5"><span class="label-text-alt text-base-content/40">Higher = applied first</span></label>
-          </div>
+          </FormField>
         </div>
 
         <div class="flex items-center gap-2">
@@ -35,10 +28,9 @@
           <label for="isActiveCheck" class="text-sm font-medium cursor-pointer">Active</label>
         </div>
 
-        <div class="form-control">
-          <label class="label py-1"><span class="label-text font-medium">Description</span></label>
+        <FormField label="Description">
           <input v-model="form.description" type="text" class="input input-bordered input-sm w-full" placeholder="Optional notes about this rule" />
-        </div>
+        </FormField>
 
         <!-- Conditions -->
         <div class="space-y-2">
@@ -57,7 +49,7 @@
                    :placeholder="cond.operator === 'in' ? 'Red, White, Rosé' : 'Value…'" />
             <button type="button" class="btn btn-xs btn-ghost text-error" @click="form.conditions.splice(idx, 1)">✕</button>
           </div>
-          <button type="button" class="btn btn-xs btn-ghost border border-base-300 mt-1"
+          <button type="button" class="btn btn-xs btn-ghost border border-base-200 mt-1"
                   @click="form.conditions.push({ field: 'color', operator: 'equals', value: '' })">
             + Add Condition
           </button>
@@ -70,13 +62,13 @@
           <div v-else class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-1.5">
             <label v-for="recipe in allRecipes" :key="recipe.id" class="flex items-center gap-2 cursor-pointer text-sm py-1">
               <input type="checkbox" class="checkbox checkbox-xs checkbox-primary" :value="recipe.id" v-model="form.recipeIds" />
-              <span class="badge badge-xs badge-ghost mr-1">{{ recipe.recipeType }}</span>
+              <span class="badge-pill bg-base-200 text-base-content/60 mr-1 text-[10px]">{{ recipe.recipeType }}</span>
               {{ recipe.name }}
             </label>
           </div>
         </div>
 
-        <div class="flex gap-2 pt-2 border-t border-base-300">
+        <div class="flex gap-2 pt-2 border-t border-base-200">
           <button class="btn btn-sm btn-primary" :disabled="saving" @click="saveRule">
             <span v-if="saving" class="loading loading-spinner loading-xs"></span>
             {{ form.id ? 'Save Changes' : 'Create Rule' }}
@@ -88,43 +80,45 @@
 
     <LoadingSpinner v-if="loading" />
 
-    <div v-else-if="rules.length === 0 && !editing" class="text-center py-16 text-base-content/40">
-      <div class="text-4xl mb-3">🔗</div>
-      <p class="text-sm">No pairing rules yet. Create your first rule to power the Weekly Menu.</p>
-    </div>
+    <EmptyState
+      v-else-if="rules.length === 0 && !editing"
+      icon="🔗"
+      title="No pairing rules yet"
+      body="Create your first rule to power the Weekly Menu."
+    />
 
     <div v-else class="space-y-3">
       <div
         v-for="rule in rules"
         :key="rule.id"
-        class="bg-base-100 rounded-2xl border border-base-300 p-4"
+        class="bg-base-100 rounded-2xl border border-base-200 p-4"
         :class="!rule.isActive ? 'opacity-50' : ''"
       >
         <div class="flex flex-wrap items-start justify-between gap-3">
           <div class="flex-1 space-y-2">
             <div class="flex flex-wrap items-center gap-2">
               <span class="font-semibold">{{ rule.name }}</span>
-              <span class="badge badge-sm" :class="rule.isActive ? 'badge-success' : 'badge-ghost'">
+              <span class="badge-pill" :class="rule.isActive ? 'bg-success/15 text-success border-success/25' : 'bg-base-200 text-base-content/40 border-base-300'">
                 {{ rule.isActive ? 'Active' : 'Disabled' }}
               </span>
-              <span class="badge badge-sm badge-ghost">Priority {{ rule.priority }}</span>
+              <span class="badge-pill bg-base-200 text-base-content/50">Priority {{ rule.priority }}</span>
             </div>
             <p v-if="rule.description" class="text-sm text-base-content/50">{{ rule.description }}</p>
             <div v-if="rule.conditions.length > 0" class="flex flex-wrap gap-1">
               <span class="text-xs text-base-content/40 mr-1">Conditions:</span>
               <span v-for="(c, idx) in rule.conditions" :key="idx"
-                    class="badge badge-xs font-mono bg-base-200 text-base-content border border-base-300">
+                    class="badge-pill font-mono text-[10px] bg-base-200 text-base-content/70">
                 {{ c.field }} {{ c.operator === 'in' ? 'in' : c.operator }} {{ c.value }}
               </span>
             </div>
             <div v-if="rule.recipes.length > 0" class="flex flex-wrap gap-1">
               <span class="text-xs text-base-content/40 mr-1">Targets:</span>
-              <span v-for="r in rule.recipes" :key="r.id" class="badge badge-xs badge-ghost border border-base-300">{{ r.name }}</span>
+              <span v-for="r in rule.recipes" :key="r.id" class="badge-pill bg-base-200 text-base-content/60 text-[10px]">{{ r.name }}</span>
             </div>
           </div>
 
           <div class="flex gap-2 flex-shrink-0">
-            <button class="btn btn-xs btn-ghost border border-base-300" @click="startEdit(rule)">Edit</button>
+            <button class="btn btn-xs btn-ghost border border-base-200" @click="startEdit(rule)">Edit</button>
             <button class="btn btn-xs btn-ghost border"
                     :class="rule.isActive ? 'border-warning text-warning' : 'border-success text-success'"
                     @click="toggleRule(rule)">
@@ -144,6 +138,9 @@ import { pairingRuleService } from '@/services/pairingRuleService'
 import { recipeService }      from '@/services/recipeService'
 import LoadingSpinner from '@/components/LoadingSpinner.vue'
 import AlertMessage   from '@/components/AlertMessage.vue'
+import PageHeader     from '@/components/ui/PageHeader.vue'
+import EmptyState     from '@/components/ui/EmptyState.vue'
+import FormField      from '@/components/ui/FormField.vue'
 
 const FIELDS = [
   { value: 'color', label: 'Color' }, { value: 'region', label: 'Region' },

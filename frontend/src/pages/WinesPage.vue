@@ -27,6 +27,27 @@
     <!-- Filters -->
     <div class="filter-panel">
 
+      <!-- Mobile toggle -->
+      <button
+        class="md:hidden w-full flex items-center justify-between text-sm font-semibold text-base-content/70"
+        @click="filtersOpen = !filtersOpen"
+      >
+        <span class="flex items-center gap-2">
+          Filters
+          <span
+            v-if="activeFilterCount > 0"
+            class="inline-flex items-center justify-center h-4 min-w-[1rem] px-1 text-[9px] font-bold bg-primary/15 text-primary rounded-full"
+          >{{ activeFilterCount }}</span>
+        </span>
+        <svg
+          class="w-4 h-4 text-base-content/30 transition-transform duration-150 shrink-0"
+          :class="filtersOpen ? 'rotate-180' : ''"
+          viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+          aria-hidden="true"
+        ><path d="M6 9l6 6 6-6"/></svg>
+      </button>
+
+      <div :class="['space-y-3', filtersOpen ? 'mt-3' : 'hidden md:block']">
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <input v-model="f.name" type="text" class="input input-bordered input-sm w-full" placeholder="Name…" />
         <input v-model="f.domain" type="text" class="input input-bordered input-sm w-full" placeholder="Domain…" />
@@ -102,6 +123,7 @@
         </select>
         <button v-if="hasActiveFilters" class="btn btn-xs btn-ghost ml-auto" @click="clearFilters">✕ Clear filters</button>
       </div>
+      </div><!-- end collapsible -->
     </div>
 
     <LoadingSpinner v-if="winesStore.loading" />
@@ -160,9 +182,20 @@ const f = reactive({
 })
 
 const showForm    = ref(false)
+const filtersOpen = ref(false)
 const error       = ref('')
 const successMsg  = ref('')
 const drinkTarget = ref(null)
+
+const activeFilterCount = computed(() =>
+  [f.name, f.domain, f.appellation].filter(Boolean).length +
+  (f.cepages.length > 0 ? 1 : 0) +
+  (f.colors.length > 0 ? 1 : 0) +
+  (f.year ? 1 : 0) +
+  (f.rank ? 1 : 0) +
+  (f.drinkStatus ? 1 : 0) +
+  (f.recipeId ? 1 : 0)
+)
 
 const pairingSearch      = ref('')
 const selectedRecipeName = ref('')

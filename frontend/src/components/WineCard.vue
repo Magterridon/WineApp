@@ -1,6 +1,6 @@
 <template>
   <div
-    class="group flex flex-col bg-base-100 rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5"
+    class="group flex flex-col bg-base-100 rounded-2xl border border-base-200 overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5"
     data-testid="wine-card"
   >
     <!-- Portrait image — wine bottle feel -->
@@ -46,13 +46,13 @@
 
       <!-- Actions -->
       <div class="pt-3 mt-1 border-t border-base-200 flex gap-2">
-        <router-link :to="`/wines/${wine.id}`" class="btn btn-xs btn-ghost border border-base-300 flex-1">
+        <router-link :to="`/wines/${wine.id}`" class="btn btn-sm btn-ghost border border-base-300 flex-1">
           Details
         </router-link>
 
         <button
           v-if="!inCellar"
-          class="btn btn-xs btn-primary flex-1"
+          class="btn btn-sm btn-primary flex-1"
           data-testid="add-to-cellar-btn"
           @click="$emit('add-to-cellar', wine.id)"
         >
@@ -61,12 +61,12 @@
 
         <template v-else>
           <button
-            class="btn btn-xs btn-secondary"
+            class="btn btn-sm btn-secondary"
             data-testid="drink-btn"
             @click="$emit('drink', wine.id)"
           >Drink</button>
           <button
-            class="btn btn-xs btn-ghost text-error border border-error/20"
+            class="btn btn-sm btn-ghost text-error border border-error/20"
             data-testid="remove-from-cellar-btn"
             @click="$emit('remove-from-cellar', wine.id)"
           >✕</button>
