@@ -1,6 +1,6 @@
 <template>
   <div
-    class="group flex flex-col bg-base-100 rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5"
+    class="group flex flex-col bg-base-100 rounded-2xl border border-base-200 overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5"
     data-testid="recipe-card"
   >
     <!-- Square image — food photography format -->
@@ -31,9 +31,9 @@
       <div class="pt-3 mt-1 border-t border-base-200">
         <router-link
           :to="`/recipes/${recipe.id}`"
-          class="btn btn-xs btn-ghost border border-base-300 w-full"
+          class="btn btn-sm btn-ghost border border-base-300 w-full"
         >
-          View Recipe
+          View Meal
         </router-link>
       </div>
     </div>

@@ -15,7 +15,7 @@
               <span>›</span>
               <span class="text-base-content/60">{{ wine.name }}</span>
             </nav>
-            <h1 class="font-heading text-3xl font-bold text-base-content leading-tight">{{ wine.name }}</h1>
+            <h1 class="font-heading text-2xl sm:text-3xl font-bold text-base-content leading-tight">{{ wine.name }}</h1>
             <p class="text-base-content/50 mt-1 flex items-center gap-2 flex-wrap">
               <span>{{ wine.domain }} · {{ wine.year }}</span>
               <WineColorBadge :color="wine.color" />
@@ -25,7 +25,7 @@
             </p>
           </div>
 
-          <div class="flex flex-wrap gap-2 mt-1">
+          <div class="flex flex-wrap items-center gap-2 mt-1">
             <button
               v-if="!cellarStore.isInCellar(wine.id)"
               class="btn btn-primary btn-sm"
@@ -33,10 +33,11 @@
               data-testid="add-to-cellar-btn"
             >+ Add to Cellar</button>
             <template v-else>
-              <button class="btn btn-secondary btn-sm" @click="showDrinkModal = true" data-testid="drink-btn">Drink a bottle</button>
-              <button class="btn btn-ghost btn-sm text-error border border-error/20" @click="removeFromCellar">Remove from Cellar</button>
+              <button class="btn btn-secondary btn-sm" @click="showDrinkModal = true" data-testid="drink-btn">Record tasting</button>
+              <button class="btn btn-ghost btn-sm text-error/70 border border-error/15 hover:border-error/40" @click="removeFromCellar">Remove</button>
             </template>
             <template v-if="authStore.isAdmin">
+              <div class="w-px h-5 bg-base-300 mx-0.5"></div>
               <button class="btn btn-ghost btn-sm border border-base-200" @click="editing = true">Edit</button>
               <button class="btn btn-ghost btn-sm text-error" @click="confirmDelete">Delete</button>
             </template>
@@ -51,7 +52,7 @@
 
           <!-- Image column -->
           <div>
-            <div class="rounded-2xl overflow-hidden shadow-sm bg-base-200" style="aspect-ratio:2/3">
+            <div class="rounded-2xl overflow-hidden shadow-sm bg-base-200 h-60 md:h-auto md:aspect-[2/3]">
               <img
                 :src="wine.imageUrl || 'https://placehold.co/400x600/4a1020/faf8f5?text=🍷'"
                 :alt="wine.name"
@@ -113,7 +114,7 @@
               <h3 class="font-heading font-semibold text-sm leading-snug mb-1">{{ r.name }}</h3>
               <p class="text-xs text-base-content/45 leading-relaxed line-clamp-2 mb-3">{{ r.description }}</p>
               <router-link :to="`/recipes/${r.id}`" class="text-xs font-semibold text-primary border-b border-primary/25 hover:border-primary transition-colors pb-px">
-                View Recipe →
+                View Meal →
               </router-link>
             </div>
           </div>

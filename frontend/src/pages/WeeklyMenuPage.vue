@@ -1,18 +1,12 @@
 <template>
   <div class="space-y-8">
 
-    <!-- Header -->
-    <div class="space-y-2">
-      <p class="label-caps text-primary">Weekly Menu</p>
-      <h1 class="font-heading text-3xl font-bold text-base-content leading-tight">Your Table for the Week</h1>
-      <div class="flex items-center gap-3">
-        <p class="text-base-content/50 text-sm">{{ weekLabel }} · Curated from your cellar</p>
-        <span class="text-xs font-semibold text-primary/60 bg-primary/8 border border-primary/14 rounded-full px-3 py-1">
-          Week {{ weekNumber }}
-        </span>
-      </div>
-      <div class="h-px mt-3" style="background: linear-gradient(to right, #4a1020 0%, rgba(74,16,32,.15) 55%, transparent 100%);"></div>
-    </div>
+    <PageHeader eyebrow="Weekly Menu" title="Your Table for the Week">
+      <span class="badge-pill bg-primary/10 text-primary border border-primary/20 text-xs font-semibold">
+        Week {{ weekNumber }}
+      </span>
+    </PageHeader>
+    <p class="text-base-content/50 text-sm -mt-4">{{ weekLabel }} · Curated from your cellar</p>
 
     <LoadingSpinner v-if="loading" />
     <AlertMessage :message="error" @dismiss="error = ''" />
@@ -20,20 +14,24 @@
     <template v-if="!loading && !error">
 
       <!-- Empty: no cellar wines -->
-      <div v-if="cellarItems.length === 0" class="text-center py-16 text-base-content/40">
-        <div class="text-5xl mb-3">🍾</div>
-        <h4 class="font-heading font-bold text-base-content/70 text-lg mt-3">Your cellar is empty</h4>
-        <p class="text-sm mt-1">Add wines to your cellar to generate a weekly menu.</p>
-        <router-link to="/wines" class="btn btn-primary btn-sm mt-4">Browse Wines</router-link>
-      </div>
+      <EmptyState
+        v-if="cellarItems.length === 0"
+        icon="🍾"
+        title="Your cellar is empty"
+        body="Add wines to your cellar to generate a weekly menu."
+      >
+        <router-link to="/wines" class="btn btn-primary btn-sm">Browse Wines</router-link>
+      </EmptyState>
 
       <!-- Empty: no recipes -->
-      <div v-else-if="recipes.length === 0" class="text-center py-16 text-base-content/40">
-        <div class="text-5xl mb-3">📋</div>
-        <h4 class="font-heading font-bold text-base-content/70 text-lg mt-3">No meals found</h4>
-        <p class="text-sm mt-1">Add some meals to generate a weekly pairing menu.</p>
-        <router-link to="/recipes" class="btn btn-primary btn-sm mt-4">Add Meals</router-link>
-      </div>
+      <EmptyState
+        v-else-if="recipes.length === 0"
+        icon="📋"
+        title="No meals found"
+        body="Add some meals to generate a weekly pairing menu."
+      >
+        <router-link to="/recipes" class="btn btn-primary btn-sm">Add Meals</router-link>
+      </EmptyState>
 
       <!-- Menu -->
       <template v-else>
@@ -66,6 +64,8 @@ import { composeMenu, getWeekSeed, getWeekLabel } from '@/utils/menuComposer'
 import MenuCourseRow  from '@/components/MenuCourseRow.vue'
 import LoadingSpinner from '@/components/LoadingSpinner.vue'
 import AlertMessage   from '@/components/AlertMessage.vue'
+import PageHeader     from '@/components/ui/PageHeader.vue'
+import EmptyState     from '@/components/ui/EmptyState.vue'
 
 const cellarStore    = useCellarStore()
 const recipes        = ref([])

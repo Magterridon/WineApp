@@ -1,11 +1,7 @@
 <template>
   <div class="space-y-4">
 
-    <!-- Header -->
-    <div class="flex items-center gap-3">
-      <h1 class="page-title">Wine Catalog</h1>
-      <span class="label-caps border border-base-300 px-2.5 py-0.5 rounded-full">Admin</span>
-    </div>
+    <PageHeader eyebrow="Admin" title="Wine Catalog" />
 
     <AlertMessage v-if="alert.message" :message="alert.message" :type="alert.type" @dismiss="alert.message = ''" />
 
@@ -63,7 +59,7 @@
         </div>
         <div class="flex gap-2 ml-auto">
           <button class="btn btn-primary btn-sm" @click="applyFilters">Search</button>
-          <button class="btn btn-ghost btn-sm border border-base-300" @click="clearFilters">Clear</button>
+          <button class="btn btn-ghost btn-sm border border-base-200" @click="clearFilters">Clear</button>
         </div>
       </div>
 
@@ -93,7 +89,7 @@
           </div>
           <div v-else class="flex gap-2">
             <input ref="fileInput" type="file" accept="image/jpeg,image/png,image/gif,image/webp" class="file-input file-input-bordered file-input-sm flex-1" @change="onFileSelected" />
-            <button class="btn btn-sm btn-ghost border border-base-300 whitespace-nowrap" :disabled="!bulkImage.file || uploading" @click="uploadFile">
+            <button class="btn btn-sm btn-ghost border border-base-200 whitespace-nowrap" :disabled="!bulkImage.file || uploading" @click="uploadFile">
               <span v-if="uploading" class="loading loading-spinner loading-xs"></span>
               Upload
             </button>
@@ -113,7 +109,7 @@
           <h3 class="font-semibold text-sm">🍽️ Bulk pairing assignment</h3>
           <div class="relative">
             <input v-model="recipeSearch" type="text" class="input input-bordered input-sm w-full" placeholder="Search recipes…" @input="searchRecipes" @focus="showRecipeDropdown = true" />
-            <ul v-if="showRecipeDropdown && recipeSearchResults.length" class="absolute z-20 w-full mt-1 bg-base-100 border border-base-300 rounded-xl shadow-lg max-h-44 overflow-y-auto" @mousedown.prevent>
+            <ul v-if="showRecipeDropdown && recipeSearchResults.length" class="absolute z-20 w-full mt-1 bg-base-100 border border-base-200 rounded-xl shadow-lg max-h-44 overflow-y-auto" @mousedown.prevent>
               <li
                 v-for="recipe in recipeSearchResults"
                 :key="recipe.id"
@@ -124,9 +120,9 @@
             </ul>
           </div>
           <div v-if="selectedRecipes.length" class="flex flex-wrap gap-1">
-            <span v-for="r in selectedRecipes" :key="r.id" class="badge badge-sm badge-secondary gap-1">
+            <span v-for="r in selectedRecipes" :key="r.id" class="badge-pill bg-secondary/15 text-secondary border border-secondary/25 flex items-center gap-1">
               {{ r.name }}
-              <button type="button" class="text-xs leading-none ml-0.5" @click="removeRecipe(r.id)">✕</button>
+              <button type="button" class="text-xs leading-none ml-0.5 hover:text-secondary/60" @click="removeRecipe(r.id)">✕</button>
             </span>
           </div>
           <p v-else class="text-xs text-base-content/40">No recipes selected yet</p>
@@ -139,7 +135,7 @@
     </div>
 
     <!-- Wine table -->
-    <div class="rounded-2xl border border-base-300 overflow-hidden">
+    <div class="rounded-2xl border border-base-200 overflow-hidden">
       <div class="overflow-x-auto">
         <table class="table table-sm">
           <thead class="bg-base-200/60 text-base-content/60">
@@ -188,7 +184,7 @@
               </td>
               <td class="text-xs text-base-content/50 hidden lg:table-cell">{{ wine.appellation }}</td>
               <td>
-                <router-link :to="`/wines/${wine.id}`" class="btn btn-xs btn-ghost border border-base-300">Edit</router-link>
+                <router-link :to="`/wines/${wine.id}`" class="btn btn-xs btn-ghost border border-base-200">Edit</router-link>
               </td>
             </tr>
           </tbody>
@@ -196,10 +192,10 @@
       </div>
 
       <!-- Pagination -->
-      <div v-if="totalPages > 1" class="flex items-center justify-between p-3 border-t border-base-300">
-        <button class="btn btn-sm btn-ghost border border-base-300" :disabled="currentPage <= 1" @click="goToPage(currentPage - 1)">← Prev</button>
+      <div v-if="totalPages > 1" class="flex items-center justify-between p-3 border-t border-base-200">
+        <button class="btn btn-sm btn-ghost border border-base-200" :disabled="currentPage <= 1" @click="goToPage(currentPage - 1)">← Prev</button>
         <span class="text-sm text-base-content/50">Page {{ currentPage }} of {{ totalPages }}</span>
-        <button class="btn btn-sm btn-ghost border border-base-300" :disabled="currentPage >= totalPages" @click="goToPage(currentPage + 1)">Next →</button>
+        <button class="btn btn-sm btn-ghost border border-base-200" :disabled="currentPage >= totalPages" @click="goToPage(currentPage + 1)">Next →</button>
       </div>
     </div>
   </div>
@@ -213,6 +209,7 @@ import WineColorPicker from '@/components/WineColorPicker.vue'
 import CepageSelect    from '@/components/CepageSelect.vue'
 import AlertMessage    from '@/components/AlertMessage.vue'
 import WineColorBadge  from '@/components/ui/WineColorBadge.vue'
+import PageHeader      from '@/components/ui/PageHeader.vue'
 
 const loading          = ref(false)
 const uploading        = ref(false)

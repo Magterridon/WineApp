@@ -18,7 +18,7 @@
             <div class="mb-2">
               <span class="badge-pill bg-primary/10 text-primary border border-primary/20">{{ recipe.recipeType }}</span>
             </div>
-            <h1 class="font-heading text-3xl font-bold text-base-content leading-tight">{{ recipe.name }}</h1>
+            <h1 class="font-heading text-2xl sm:text-3xl font-bold text-base-content leading-tight">{{ recipe.name }}</h1>
           </div>
           <div v-if="authStore.isAdmin" class="flex gap-2 mt-1">
             <button class="btn btn-ghost btn-sm border border-base-200" @click="editing = true">Edit</button>
@@ -34,7 +34,7 @@
 
           <!-- Left: image + description -->
           <div class="space-y-4">
-            <div class="rounded-2xl overflow-hidden shadow-sm bg-base-200" style="aspect-ratio:1/1">
+            <div class="rounded-2xl overflow-hidden shadow-sm bg-base-200 h-60 sm:h-auto sm:aspect-square">
               <img
                 :src="recipe.imageUrl || 'https://placehold.co/400x400/5D4037/faf8f5?text=🍽️'"
                 :alt="recipe.name"
@@ -103,7 +103,7 @@
             </div>
             <div v-else>
               <h2 class="section-title mb-3">Wine Pairings</h2>
-              <p class="text-base-content/40 text-sm italic">No wine pairings defined for this recipe.</p>
+              <p class="text-base-content/40 text-sm italic">No wine pairings defined for this meal.</p>
             </div>
           </div>
         </div>

@@ -1,5 +1,5 @@
 <template>
-  <div class="rounded-2xl overflow-hidden border border-base-300 shadow-sm">
+  <div class="rounded-2xl overflow-hidden border border-base-200 shadow-sm">
     <div class="grid grid-cols-1 lg:grid-cols-5">
 
       <!-- Wine panel (dark) -->
@@ -60,7 +60,7 @@
             <router-link
               :to="`/recipes/${recipe.id}`"
               class="text-sm font-semibold text-primary border-b border-primary/30 pb-px hover:border-primary transition-colors no-underline"
-            >See full recipe →</router-link>
+            >See full meal →</router-link>
           </div>
         </template>
 
