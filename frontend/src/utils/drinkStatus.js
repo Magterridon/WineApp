@@ -1,3 +1,5 @@
+export { COLOR_STYLES } from './wineColor.js'
+
 const CURRENT_YEAR = new Date().getFullYear()
 
 /**
@@ -22,15 +24,6 @@ export function getDrinkStatus(wine) {
 }
 
 export const WINE_COLORS = ['Red', 'White', 'Rosé', 'Sparkling', 'Fortified', 'Orange']
-
-export const COLOR_STYLES = {
-  Red:       { bg: '#8B1A1A', text: 'white' },
-  White:     { bg: '#c8a951', text: '#333' },
-  'Rosé':    { bg: '#e8a0a0', text: '#333' },
-  Sparkling: { bg: '#b0c4de', text: '#333' },
-  Fortified: { bg: '#6B3A2A', text: 'white' },
-  Orange:    { bg: '#c87941', text: 'white' },
-}
 
 export const DRINK_STATUS_OPTIONS = [
   { value: '',      label: 'All statuses' },

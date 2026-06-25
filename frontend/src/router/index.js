@@ -39,9 +39,21 @@ const routes = [
     meta: { requiresAuth: true }
   },
   {
+    path: '/weekly-menu',
+    name: 'weekly-menu',
+    component: () => import('@/pages/WeeklyMenuPage.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
     path: '/admin/wines',
     name: 'admin-wines',
     component: () => import('@/pages/AdminWinesPage.vue'),
+    meta: { requiresAuth: true, requiresAdmin: true }
+  },
+  {
+    path: '/admin/pairing-rules',
+    name: 'admin-pairing-rules',
+    component: () => import('@/pages/AdminPairingRulesPage.vue'),
     meta: { requiresAuth: true, requiresAdmin: true }
   }
 ]

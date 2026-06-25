@@ -1,277 +1,162 @@
-# Wine Cellar App ‚Äî Admin Wine Backoffice Specification
+# Wine Cellar App ó Admin Pairing Rules Specification
 
 ## Goal
 
-Create a lightweight admin backoffice for managing and curating the shared wine catalog.
+Provide an admin-only interface for creating and managing reusable wine-to-meal pairing rules.
 
-This backoffice should help Admin users:
-- search and filter wines efficiently
-- edit wine data
-- bulk update wine metadata
-- bulk assign or replace wine images
-- bulk create or assign pairing data
-- improve imported wine quality over time
-
-This is an internal tool for data curation, not a public-facing user feature.
+This feature should allow Admin to define modular pairing logic without manually pairing every wine one by one.
 
 ---
 
-## Main objectives
+## Core concept
 
-The admin backoffice should make it easy to:
-1. find groups of wines quickly
-2. select multiple wines at once
-3. apply bulk actions safely
-4. improve catalog quality without manual one-by-one editing
+A pairing rule matches wines using wine attributes, then links them to one or more meals.
+
+Examples:
+- all red Bordeaux wines pair with lamb and beef
+- Pinot Noir pairs with duck
+- Ch‚teau Margaux wines pair with more premium dishes
+
+This system complements direct pairings rather than replacing them.
 
 ---
 
 ## Access control
 
-- only Admin users can access this backoffice
-- all admin actions must be protected on the backend
-- non-admin users must not see or access these pages/actions
+- only Admin users can access this page
+- backend protection is required
+- non-admin users must not access rule management
 
 ---
 
-## Scope
+## Main objectives
 
-This first version focuses on wine catalog curation.
-
-It should support:
-- wine listing
-- wine filtering
-- wine selection
-- bulk updates
-- bulk image update
-- bulk pairing assignment
-
-This first version does not need:
-- advanced audit logs
-- multi-admin workflows
-- approval chains
-- version history
-- complex asset management
-- AI automation
+Admin should be able to:
+- create a rule
+- edit a rule
+- enable/disable a rule
+- define one or more wine-matching conditions
+- assign one or more meals as targets
+- manage broad and specific rules together
+- understand rule priority/specificity
 
 ---
 
-## 1. Admin Wine List Page
+## Rule structure
 
-### Goal
-Provide a searchable and filterable list of wines for curation.
+A rule should conceptually include:
+- name
+- active/inactive status
+- optional description
+- one or more conditions
+- one or more target meals
+- priority or specificity information if needed
 
-### Requirements
-The admin should be able to:
-- see a list/table of wines
-- search wines
-- filter wines using wine-related fields
-- sort wines
-- select one or many wines
+---
 
-### Search/filter fields
-Support as many of the existing useful wine fields as possible, especially:
-- wine name
-- ch√¢teau / castle
-- domaine / producer
-- cuv√©e
-- vintage/year
+## Recommended MVP condition fields
+
+Support practical structured wine conditions such as:
+- producer / domain / ch‚teau
+- wine name if useful
+- appellation
+- region
 - country
-- region
-- appellation
-- classification/rank
-- color/type
-- grape varieties / c√©pages
-- drink status / drink window
-- source/import source if available
-- image presence
-- pairing presence
+- color / type
+- cÈpage
+- classification / rank
+- wine style if supported
 
-### Notes
-- use the existing schema as source of truth
-- if some fields do not exist yet, only add them if truly needed and useful
-- "castle" and "domaine" may map to producer/domain depending on current schema
-- filtering should be practical, not overcomplicated
+Use current schema where possible.
 
 ---
 
-## 2. Sorting
+## Recommended MVP operators
+
+Keep rule logic simple.
+
+Recommended operators:
+- equals
+- contains
+- one of / in list
+
+Do not build a complex boolean rules engine in the first version.
+
+---
+
+## Rule targets
+
+A single rule may target multiple meals.
+
+This is required because:
+- one wine can match multiple meals
+- pairing is not one-to-one
+
+---
+
+## Specificity and priority
 
 ### Goal
-Help Admin quickly organize and review large wine lists.
+Ensure deterministic behavior when multiple rules match.
 
-### Requirements
-Support sorting where practical by:
-- wine name
-- producer / ch√¢teau / domaine
-- vintage
-- appellation
-- classification/rank
-- region
-- score if available
-- image presence
-- updated date if available
+### Recommended pairing resolution relevance
+1. direct wine-meal pairing
+2. producer/ch‚teau-specific rule
+3. appellation-specific rule
+4. region/color/cÈpage rule
+5. generic style rule
 
----
+If exact rule-level hierarchy is difficult to encode, use:
+- explicit priority
+- and/or specificity derived from matched conditions
 
-## 3. Selection and Bulk Actions
-
-### Goal
-Allow Admin to select multiple wines and apply updates efficiently.
-
-### Requirements
-The admin should be able to:
-- select individual wines
-- select multiple wines
-- select all results on the current page
-- ideally keep selection while filters are active
-
-### Bulk actions for first version
-Support bulk actions for:
-- bulk update image
-- bulk assign pairing
-- bulk update selected metadata fields where practical
+Behavior must remain deterministic.
 
 ---
 
-## 4. Bulk Image Update
+## Admin UI expectations
 
-### Goal
-Allow Admin to replace placeholder/random images with better wine images for groups of wines.
+A practical form-based interface is enough.
 
-### Requirements
-The admin should be able to:
-- upload an image file
-- apply that image to multiple selected wines
-- replace existing placeholder images
-- update many wines sharing the same ch√¢teau/domaine/producer with one action
+The page should allow Admin to:
+- list rules
+- inspect rule summary
+- create/edit rule
+- activate/deactivate rule
+- see target meals
+- understand whether a rule is broad or specific
 
-### Example use case
-- select all wines from Ch√¢teau Margaux
-- upload one image
-- apply that image to all selected wines
-
-### Notes
-- if file upload already exists in the project, reuse it
-- if not, implement the simplest maintainable upload/storage flow already compatible with the current stack
-- document storage assumptions
-- if full upload infrastructure is too large, a fallback image URL input may also be supported, but upload is preferred
+Do not overengineer a visual no-code builder in the first version.
 
 ---
 
-## 5. Bulk Pairing Assignment
+## Backend expectations
 
-### Goal
-Allow Admin to assign pairing information to multiple wines at once.
-
-### Requirements
-The admin should be able to:
-- select multiple wines
-- assign one or more recipes/meals to them
-- create pairing associations in bulk
-- avoid duplicate pairing creation if the relation already exists
-
-### Pairing scope
-Bulk pairing may be applied:
-- directly to selected wines
-- based on common producer/appellation/style if supported by the current model
-
-### Notes
-- keep this consistent with the current pairing model
-- do not redesign pairing architecture unless necessary
-- make only minimal schema/API changes
+- rules must validate correctly
+- inactive rules must not be evaluated
+- duplicate rule-target links should be avoided
+- invalid meal references should be prevented
+- evaluation behavior should be predictable
 
 ---
 
-## 6. Single Wine Edit Support
+## Relationship with direct pairings
 
-### Goal
-Allow Admin to quickly fix one wine when bulk action is not appropriate.
+Direct pairings and rule-based pairings must coexist.
 
-### Requirements
-From the admin wine list, Admin should be able to:
-- open a single wine edit view/page/modal
-- update key wine fields
-- change image
-- manage pairings for one wine
-
-This can be simple in the first version.
+The app should support:
+- specific hand-curated pairings
+- broad reusable rules
+- future weekly-menu selection logic
 
 ---
 
-## 7. Image / Pairing Indicators
+## Definition of Done
 
-### Goal
-Help Admin identify incomplete records quickly.
-
-### Requirements
-In the admin wine list, show clear indicators for:
-- has image / missing image
-- has pairing / missing pairing
-- source/import source if relevant
-
-This helps prioritize curation work.
-
----
-
-## 8. API / Backend Expectations
-
-### Requirements
-- add admin-only endpoints or protect existing endpoints appropriately
-- support filtering/sorting for admin list queries
-- support bulk update actions safely
-- support image upload and bulk assignment
-- support bulk pairing assignment
-- validate admin permissions on the backend
-
-### Data integrity
-- avoid duplicate pairings
-- avoid invalid bulk updates
-- return clear success/error responses
-
----
-
-## 9. UI / UX Expectations
-
-### Requirements
-- keep the admin interface practical and fast
-- use table/list layout if appropriate
-- allow filtering without clutter
-- make selected item count visible
-- make bulk actions obvious
-- confirm destructive or large actions if needed
-- show success/error feedback clearly
-
-### Key usability requirement
-This page should make it easy to do things like:
-- filter all wines from Ch√¢teau Margaux
-- select them all
-- upload and assign a better image
-- filter wines with missing pairings
-- assign one recipe to many wines at once
-
----
-
-## 10. Technical Constraints
-
-- review the current implementation first
-- preserve the current schema as much as possible
-- make only minimal schema/API/UI changes
-- do not overengineer a full CMS
-- keep the implementation maintainable
-- preserve existing wine pages and user flows
-- update tests where needed
-
----
-
-## 11. Definition of Done
-
-This work is successful when:
-- Admin has a dedicated wine backoffice page
-- Admin can filter and sort wines using useful wine fields
-- Admin can select multiple wines
-- Admin can bulk upload/apply an image to selected wines
-- Admin can bulk assign pairings to selected wines
-- Admin can identify wines missing images or pairings
-- Admin-only access is enforced properly
-- the tool is practical for ongoing catalog curation
+This feature is successful when:
+- Admin can create and manage pairing rules
+- rules can target multiple meals
+- rules can match wines through structured conditions
+- rule behavior is deterministic
+- direct pairings and rules can coexist
+- the feature is compatible with Weekly Menu and future pairing suggestions

@@ -44,6 +44,7 @@ builder.Services.AddScoped<DataSeeder>();
 builder.Services.AddScoped<WineAppellationImporter>();
 builder.Services.AddScoped<DrinkService>();
 builder.Services.AddScoped<AdminWineService>();
+builder.Services.AddScoped<PairingRuleService>();
 
 var app = builder.Build();
 

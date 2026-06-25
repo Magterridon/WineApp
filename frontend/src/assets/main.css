@@ -1,0 +1,133 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    font-family: 'Inter', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1, h2, h3, h4, h5 {
+    font-family: 'Fraunces', Georgia, serif;
+  }
+}
+
+@layer components {
+
+  /* ── Typography ──────────────────────────── */
+
+  .page-title {
+    @apply font-heading text-2xl font-bold text-base-content tracking-tight;
+  }
+
+  .section-title {
+    @apply font-heading text-lg font-semibold text-base-content;
+  }
+
+  /* Eyebrow label above headings */
+  .label-eyebrow {
+    @apply text-[10px] font-semibold tracking-[0.15em] uppercase text-primary/60 mb-1 block;
+  }
+
+  /* Section label — small all-caps divider */
+  .label-caps {
+    @apply text-[10px] font-semibold tracking-[0.12em] uppercase text-base-content/40;
+  }
+
+  /* ── Page structure ──────────────────────── */
+
+  /* Editorial page header — big heading + optional subtitle */
+  .page-header {
+    @apply flex flex-wrap items-end justify-between gap-4 pb-5 border-b border-base-200;
+  }
+
+  /* ── Cards ───────────────────────────────── */
+
+  .card-lift {
+    @apply transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md;
+  }
+
+  /* ── Filter panel ────────────────────────── */
+
+  /* Lighter filter area — less admin panel */
+  .filter-panel {
+    @apply bg-base-200/30 border border-base-200 rounded-2xl p-4 space-y-3;
+  }
+
+  /* ── Empty state ─────────────────────────── */
+
+  .empty-state {
+    @apply flex flex-col items-center text-center py-20 px-8;
+  }
+
+  .empty-state-icon {
+    @apply text-5xl mb-4 block;
+    filter: saturate(0.4) opacity(0.35);
+  }
+
+  .empty-state-title {
+    @apply font-heading text-lg font-semibold text-base-content/60 mb-1.5;
+  }
+
+  .empty-state-body {
+    @apply text-sm text-base-content/40 max-w-xs leading-relaxed;
+  }
+
+  /* ── Stars ───────────────────────────────── */
+
+  .stars-active { @apply text-amber-400; }
+  .stars-empty  { @apply text-base-content/20; }
+
+  /* ── Bottom nav ──────────────────────────── */
+
+  .bottom-nav-item {
+    @apply relative flex flex-col items-center justify-center gap-0.5 flex-1 py-2 px-1
+           text-[10px] font-semibold tracking-wide
+           text-base-content/40 transition-colors duration-150
+           hover:text-primary;
+  }
+  .bottom-nav-item.active {
+    @apply text-primary;
+  }
+  .bottom-nav-item.active::before {
+    content: '';
+    @apply absolute top-0 left-1/2 -translate-x-1/2 w-5 h-0.5 bg-primary rounded-b-full;
+  }
+
+  /* ── Decorative wine-red rule ────────────── */
+
+  .wine-rule {
+    @apply h-px border-0;
+    background: linear-gradient(to right, rgb(74 16 32 / 0.18) 0%, rgb(74 16 32 / 0.06) 55%, transparent 100%);
+  }
+
+  /* ── Stat card (cellar summary) ──────────── */
+
+  .stat-tile {
+    @apply rounded-2xl text-center p-4 cursor-pointer transition-all duration-150 select-none;
+  }
+
+  .stat-tile-value {
+    @apply font-heading text-2xl font-bold leading-none;
+  }
+
+  .stat-tile-label {
+    @apply text-xs text-base-content/50 mt-1;
+  }
+
+  /* ── Table refinements ───────────────────── */
+
+  /* Lighter table head — replaces bg-base-200 */
+  .table-head-light thead th {
+    @apply bg-transparent text-[10px] uppercase tracking-widest font-semibold text-base-content/40 border-b border-base-200 py-3;
+  }
+
+  /* ── Badge pill (non-DaisyUI small label) ── */
+
+  .badge-pill {
+    @apply inline-flex items-center gap-1 text-[10px] font-semibold px-2.5 py-0.5 rounded-full;
+  }
+
+}

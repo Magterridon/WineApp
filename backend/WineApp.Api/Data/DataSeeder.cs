@@ -169,6 +169,44 @@ public class DataSeeder(AppDbContext db)
             new() { RecipeId = tiramisu.Id, WineId = amarone.Id, Notes = "Amarone ou Recioto pour les amateurs de vins doux." }
         ]);
 
+        // Seed pairing rules
+        db.PairingRules.AddRange([
+            new()
+            {
+                Name = "Red Bordeaux with Red Meat",
+                Description = "Classic pairing: red wines from Bordeaux match well with beef and lamb dishes.",
+                IsActive = true,
+                Priority = 20,
+                ConditionsJson = """[{"Field":"color","Operator":"equals","Value":"Red"},{"Field":"region","Operator":"equals","Value":"Bordeaux"}]""",
+                RecipeTargets = [
+                    new() { RecipeId = bourguignon.Id },
+                    new() { RecipeId = magret.Id }
+                ]
+            },
+            new()
+            {
+                Name = "Bourgogne Pinot Noir with Game",
+                Description = "Pinot Noir from Bourgogne is an excellent match for duck and game birds.",
+                IsActive = true,
+                Priority = 30,
+                ConditionsJson = """[{"Field":"region","Operator":"equals","Value":"Bourgogne"},{"Field":"cepage","Operator":"equals","Value":"Pinot Noir"}]""",
+                RecipeTargets = [
+                    new() { RecipeId = magret.Id }
+                ]
+            },
+            new()
+            {
+                Name = "Loire Valley Whites with Seafood",
+                Description = "Crisp whites from the Loire Valley are perfect with fish and seafood starters.",
+                IsActive = true,
+                Priority = 15,
+                ConditionsJson = """[{"Field":"region","Operator":"contains","Value":"Loire"}]""",
+                RecipeTargets = [
+                    new() { RecipeId = tartare.Id }
+                ]
+            }
+        ]);
+
         // Seed cellar items for admin
         var adminCellar = await db.Cellars.FirstAsync(c => c.UserId == admin.Id);
         db.CellarItems.AddRange([
